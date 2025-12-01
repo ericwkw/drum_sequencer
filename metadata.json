@@ -1,0 +1,5 @@
+{
+  "name": "AI BeatGenius",
+  "description": "A smart 16-step drum sequencer powered by Gemini 2.5 Flash. Compose beats manually or describe them to the AI to generate patterns instantly.",
+  "requestFramePermissions": []
+}
