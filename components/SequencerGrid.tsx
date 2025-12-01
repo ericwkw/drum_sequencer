@@ -24,14 +24,16 @@ const SequencerGrid: React.FC<SequencerGridProps> = ({
 }) => {
   
   const gridStyle = {
-    gridTemplateColumns: `repeat(${steps}, minmax(0, 1fr))`
+    // FORCE minimum width of 40px per step to prevent overlap
+    gridTemplateColumns: `repeat(${steps}, minmax(40px, 1fr))`
   };
 
   return (
     <div className="w-full bg-gray-900 rounded-xl shadow-2xl border border-gray-800 p-4 overflow-hidden flex flex-col">
       
       <div className="overflow-x-auto pb-2 custom-scrollbar">
-        <div className="flex flex-col gap-2" style={{ minWidth: `${steps * 40}px` }}>
+        {/* min-w-max ensures the container grows to fit the full width of headers + grid steps, triggering scroll instead of squash */}
+        <div className="flex flex-col gap-2 min-w-max">
           
           {/* Timeline Ruler */}
           <div className="flex gap-4 items-end mb-1">

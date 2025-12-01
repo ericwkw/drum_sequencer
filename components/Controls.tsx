@@ -62,6 +62,18 @@ const Controls: React.FC<ControlsProps> = ({
       }
   };
 
+  // Common time signatures mapped to steps
+  const TIME_SIGNATURES = [
+      { label: '4/4 (Standard)', value: 16 },
+      { label: '4/4 (2 Bars)', value: 32 },
+      { label: '3/4 (Waltz)', value: 12 },
+      { label: '5/4 (Jazz)', value: 20 },
+      { label: '7/8 (Odd)', value: 14 },
+      { label: '6/8 (Compound)', value: 12 }, 
+      { label: '9/8 (Compound)', value: 18 },
+      { label: 'Max (64)', value: 64 },
+  ];
+
   return (
     <div className="flex flex-col gap-4 w-full max-w-[1800px] mx-auto mb-6">
       
@@ -95,31 +107,49 @@ const Controls: React.FC<ControlsProps> = ({
                 {/* BPM */}
                 <div className="bg-gray-950 rounded-lg p-2 border border-gray-700 flex flex-col">
                     <label className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-1">Tempo</label>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 h-full">
                         <input
                             type="number"
                             min="60"
                             max="200"
                             value={bpm}
                             onChange={(e) => onBpmChange(Number(e.target.value))}
-                            className="bg-transparent text-cyan-400 font-mono text-xl font-bold w-full focus:outline-none"
+                            className="bg-transparent text-cyan-400 font-mono text-2xl font-bold w-full focus:outline-none"
                         />
-                        <span className="text-xs text-gray-600">BPM</span>
+                        <span className="text-xs text-gray-600 font-bold">BPM</span>
                     </div>
                 </div>
 
                 {/* Steps / Time Signature */}
                 <div className="bg-gray-950 rounded-lg p-2 border border-gray-700 flex flex-col">
-                     <label className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-1">Length</label>
-                     <div className="flex items-center gap-2">
+                     <label className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-1 flex justify-between">
+                        <span>Time Sig / Steps</span>
+                     </label>
+                     
+                     {/* Preset Dropdown */}
+                     <select 
+                        value={steps} 
+                        onChange={(e) => onStepsChange(Number(e.target.value))}
+                        className="w-full bg-gray-900 text-gray-300 text-[10px] font-bold rounded border border-gray-800 p-1 mb-1 focus:ring-1 focus:ring-cyan-500 focus:outline-none cursor-pointer"
+                     >
+                        {TIME_SIGNATURES.map(sig => (
+                            <option key={sig.value + sig.label} value={sig.value}>{sig.label}</option>
+                        ))}
+                        {!TIME_SIGNATURES.some(s => s.value === steps) && (
+                            <option value={steps}>Custom ({steps})</option>
+                        )}
+                     </select>
+
+                     {/* Manual Stepper */}
+                     <div className="flex items-center justify-between bg-gray-900 rounded px-1">
                          <button 
-                            onClick={() => onStepsChange(Math.max(4, steps - 4))}
-                            className="text-gray-500 hover:text-white px-1"
+                            onClick={() => onStepsChange(Math.max(4, steps - 1))}
+                            className="text-gray-500 hover:text-white px-2 text-lg leading-none"
                          >-</button>
-                         <span className="flex-1 text-center text-cyan-400 font-mono text-xl font-bold">{steps}</span>
+                         <span className="text-cyan-400 font-mono text-sm font-bold">{steps}</span>
                          <button 
-                            onClick={() => onStepsChange(Math.min(64, steps + 4))}
-                            className="text-gray-500 hover:text-white px-1"
+                            onClick={() => onStepsChange(Math.min(64, steps + 1))}
+                            className="text-gray-500 hover:text-white px-2 text-lg leading-none"
                          >+</button>
                      </div>
                 </div>
