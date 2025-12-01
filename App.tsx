@@ -338,15 +338,9 @@ const App: React.FC = () => {
     try {
       const result = await generatePatternWithGemini(prompt, bpm, steps);
       
-      const aiPatterns: Record<string, boolean[]> = {
-          'kick': result.grid[0],
-          'snare': result.grid[1],
-          'hihat': result.grid[2],
-          'clap': result.grid[3]
-      };
-
+      // Update grid for active bank based on matches between current tracks and AI result
       const newGridForActiveBank = tracks.map(track => {
-          const pattern = aiPatterns[track.instrumentId];
+          const pattern = result.grid[track.instrumentId];
           if (pattern) {
               if (pattern.length < steps) return [...pattern, ...Array(steps - pattern.length).fill(false)];
               if (pattern.length > steps) return pattern.slice(0, steps);

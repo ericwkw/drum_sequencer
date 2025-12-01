@@ -1,5 +1,5 @@
 
-export type InstrumentType = 'kick' | 'snare' | 'hihat' | 'clap';
+export type InstrumentType = 'kick' | 'snare' | 'hihat' | 'clap' | 'tom_high' | 'tom_low' | 'crash' | 'ride' | 'openhat';
 
 export interface Instrument {
   id: InstrumentType;

@@ -2,54 +2,82 @@
 import { Instrument, InstrumentType, GridPattern, DrumKit, Track } from './types';
 
 export const INSTRUMENTS: Instrument[] = [
-  {
-    id: 'kick',
-    name: 'Kick',
-    color: 'bg-rose-500'
-  },
-  {
-    id: 'snare',
-    name: 'Snare',
-    color: 'bg-amber-500'
-  },
-  {
-    id: 'hihat',
-    name: 'Hi-Hat',
-    color: 'bg-emerald-500'
-  },
-  {
-    id: 'clap',
-    name: 'Clap',
-    color: 'bg-violet-500'
-  }
+  { id: 'kick', name: 'Kick', color: 'bg-rose-500' },
+  { id: 'snare', name: 'Snare', color: 'bg-amber-500' },
+  { id: 'hihat', name: 'Hi-Hat', color: 'bg-emerald-500' },
+  { id: 'openhat', name: 'Open Hat', color: 'bg-emerald-300' },
+  { id: 'clap', name: 'Clap', color: 'bg-violet-500' },
+  { id: 'tom_high', name: 'Hi Tom', color: 'bg-orange-500' },
+  { id: 'tom_low', name: 'Lo Tom', color: 'bg-orange-700' },
+  { id: 'crash', name: 'Crash', color: 'bg-yellow-400' },
+  { id: 'ride', name: 'Ride', color: 'bg-yellow-600' },
 ];
+
+// Fallback URLs for common sounds
+const SAMPLES = {
+    CR78_KICK: "https://tonejs.github.io/audio/drum-samples/CR78/kick.mp3",
+    CR78_SNARE: "https://tonejs.github.io/audio/drum-samples/CR78/snare.mp3",
+    CR78_HIHAT: "https://tonejs.github.io/audio/drum-samples/CR78/hihat.mp3",
+    CR78_TOM: "https://tonejs.github.io/audio/drum-samples/CR78/tom1.mp3", // Note: often missing, might need fallback
+    
+    KPR77_KICK: "https://tonejs.github.io/audio/drum-samples/KPR77/kick.mp3",
+    KPR77_SNARE: "https://tonejs.github.io/audio/drum-samples/KPR77/snare.mp3",
+    KPR77_HIHAT: "https://tonejs.github.io/audio/drum-samples/KPR77/hihat.mp3",
+    
+    LINN_KICK: "https://tonejs.github.io/audio/drum-samples/LinnDrum/kick.mp3",
+    LINN_SNARE: "https://tonejs.github.io/audio/drum-samples/LinnDrum/snare.mp3",
+    LINN_HIHAT: "https://tonejs.github.io/audio/drum-samples/LinnDrum/hihat.mp3",
+    
+    // Reliable Fallbacks (LinnDrum / Berklee)
+    CLAP: "https://tonejs.github.io/audio/berklee/clap_1.mp3", 
+    TOM_HI: "https://tonejs.github.io/audio/drum-samples/LinnDrum/tom1.mp3", // Using Linn for Toms
+    TOM_LO: "https://tonejs.github.io/audio/drum-samples/LinnDrum/tom2.mp3",
+    CRASH: "https://tonejs.github.io/audio/drum-samples/LinnDrum/crash.mp3",
+    RIDE: "https://tonejs.github.io/audio/drum-samples/LinnDrum/ride.mp3",
+    OPEN_HAT: "https://tonejs.github.io/audio/drum-samples/LinnDrum/openhat.mp3" 
+};
 
 export const KITS: Record<string, DrumKit> = {
   CR78: {
     name: "Classic (CR78)",
     samples: {
-      kick: "https://tonejs.github.io/audio/drum-samples/CR78/kick.mp3",
-      snare: "https://tonejs.github.io/audio/drum-samples/CR78/snare.mp3",
-      hihat: "https://tonejs.github.io/audio/drum-samples/CR78/hihat.mp3",
-      clap: "https://tonejs.github.io/audio/berklee/clap_1.mp3" // Fallback to Berklee clap
+      kick: SAMPLES.CR78_KICK,
+      snare: SAMPLES.CR78_SNARE,
+      hihat: SAMPLES.CR78_HIHAT,
+      openhat: SAMPLES.OPEN_HAT, // Fallback
+      clap: SAMPLES.CLAP,
+      tom_high: SAMPLES.TOM_HI, // Fallback
+      tom_low: SAMPLES.TOM_LO, // Fallback
+      crash: SAMPLES.CRASH, // Fallback
+      ride: SAMPLES.RIDE // Fallback
     }
   },
   KPR77: {
     name: "Analog (KPR77)",
     samples: {
-      kick: "https://tonejs.github.io/audio/drum-samples/KPR77/kick.mp3",
-      snare: "https://tonejs.github.io/audio/drum-samples/KPR77/snare.mp3",
-      hihat: "https://tonejs.github.io/audio/drum-samples/KPR77/hihat.mp3",
-      clap: "https://tonejs.github.io/audio/berklee/clap_1.mp3" // Fallback to Berklee clap
+      kick: SAMPLES.KPR77_KICK,
+      snare: SAMPLES.KPR77_SNARE,
+      hihat: SAMPLES.KPR77_HIHAT,
+      openhat: SAMPLES.OPEN_HAT, // Fallback
+      clap: SAMPLES.CLAP,
+      tom_high: SAMPLES.TOM_HI, // Fallback
+      tom_low: SAMPLES.TOM_LO, // Fallback
+      crash: SAMPLES.CRASH, // Fallback
+      ride: SAMPLES.RIDE // Fallback
     }
   },
   LINN: {
     name: "Digital (Linn)",
     samples: {
-      kick: "https://tonejs.github.io/audio/drum-samples/LinnDrum/kick.mp3",
-      snare: "https://tonejs.github.io/audio/drum-samples/LinnDrum/snare.mp3",
-      hihat: "https://tonejs.github.io/audio/drum-samples/LinnDrum/hihat.mp3",
-      clap: "https://tonejs.github.io/audio/berklee/clap_1.mp3" // Fallback to Berklee clap
+      kick: SAMPLES.LINN_KICK,
+      snare: SAMPLES.LINN_SNARE,
+      hihat: SAMPLES.LINN_HIHAT,
+      openhat: SAMPLES.OPEN_HAT,
+      clap: SAMPLES.CLAP,
+      tom_high: SAMPLES.TOM_HI,
+      tom_low: SAMPLES.TOM_LO,
+      crash: SAMPLES.CRASH,
+      ride: SAMPLES.RIDE
     }
   }
 };

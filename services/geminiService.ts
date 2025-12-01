@@ -1,23 +1,24 @@
+
 import { GoogleGenAI, Type } from "@google/genai";
 import { GridPattern } from "../types";
 
 const getSystemInstruction = (steps: number) => `
 You are a professional drum machine sequencer expert. 
 You will receive a description of a drum beat.
-You must output a JSON object representing a ${steps}-step grid for 4 basic instruments:
-1. Kick
-2. Snare
-3. Hi-Hat
-4. Clap
+You must output a JSON object representing a ${steps}-step grid for standard drum instruments:
+Kick, Snare, Hi-Hat, Clap, Open Hat, High Tom, Low Tom, Crash, Ride.
 
-The grid should be a flat array of booleans for each instrument, length ${steps}.
+The grid should be a flat array of booleans for each instrument used, length ${steps}.
 `;
 
 export const generatePatternWithGemini = async (
   prompt: string, 
   currentBpm: number,
   steps: number
-): Promise<{ grid: GridPattern; bpm: number }> => {
+): Promise<{ 
+    grid: Record<string, boolean[]>; // Changed to map instrumentID -> pattern
+    bpm: number 
+}> => {
   
   if (!process.env.API_KEY) {
     throw new Error("API Key is missing");
@@ -39,28 +40,17 @@ export const generatePatternWithGemini = async (
               type: Type.NUMBER,
               description: "The recommended BPM.",
             },
-            kickPattern: {
-              type: Type.ARRAY,
-              items: { type: Type.BOOLEAN },
-              description: `Steps for Kick (length ${steps})`,
-            },
-            snarePattern: {
-              type: Type.ARRAY,
-              items: { type: Type.BOOLEAN },
-              description: `Steps for Snare (length ${steps})`,
-            },
-            hihatPattern: {
-              type: Type.ARRAY,
-              items: { type: Type.BOOLEAN },
-              description: `Steps for Hi-Hat (length ${steps})`,
-            },
-            clapPattern: {
-              type: Type.ARRAY,
-              items: { type: Type.BOOLEAN },
-              description: `Steps for Clap (length ${steps})`,
-            },
+            kickPattern: { type: Type.ARRAY, items: { type: Type.BOOLEAN } },
+            snarePattern: { type: Type.ARRAY, items: { type: Type.BOOLEAN } },
+            hihatPattern: { type: Type.ARRAY, items: { type: Type.BOOLEAN } },
+            clapPattern: { type: Type.ARRAY, items: { type: Type.BOOLEAN } },
+            openhatPattern: { type: Type.ARRAY, items: { type: Type.BOOLEAN } },
+            tomHighPattern: { type: Type.ARRAY, items: { type: Type.BOOLEAN } },
+            tomLowPattern: { type: Type.ARRAY, items: { type: Type.BOOLEAN } },
+            crashPattern: { type: Type.ARRAY, items: { type: Type.BOOLEAN } },
+            ridePattern: { type: Type.ARRAY, items: { type: Type.BOOLEAN } },
           },
-          required: ["suggestedBpm", "kickPattern", "snarePattern", "hihatPattern", "clapPattern"],
+          required: ["suggestedBpm", "kickPattern", "snarePattern", "hihatPattern"],
         },
       },
     });
@@ -82,15 +72,20 @@ export const generatePatternWithGemini = async (
       return [...arr, ...Array(steps - arr.length).fill(false)];
     };
 
-    const newGrid: GridPattern = [
-      ensureSteps(data.kickPattern),
-      ensureSteps(data.snarePattern),
-      ensureSteps(data.hihatPattern),
-      ensureSteps(data.clapPattern),
-    ];
+    const patterns: Record<string, boolean[]> = {
+        'kick': ensureSteps(data.kickPattern),
+        'snare': ensureSteps(data.snarePattern),
+        'hihat': ensureSteps(data.hihatPattern),
+        'clap': ensureSteps(data.clapPattern),
+        'openhat': ensureSteps(data.openhatPattern),
+        'tom_high': ensureSteps(data.tomHighPattern),
+        'tom_low': ensureSteps(data.tomLowPattern),
+        'crash': ensureSteps(data.crashPattern),
+        'ride': ensureSteps(data.ridePattern),
+    };
 
     return {
-      grid: newGrid,
+      grid: patterns,
       bpm: data.suggestedBpm || currentBpm,
     };
 
