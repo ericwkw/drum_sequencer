@@ -10,6 +10,7 @@ const STORAGE_KEY = 'beatme_state_v1';
 
 const App: React.FC = () => {
   // State
+  const [projectName, setProjectName] = useState<string>("Untitled Beat");
   const [tracks, setTracks] = useState<Track[]>(DEFAULT_TRACKS);
   const [steps, setSteps] = useState<number>(DEFAULT_STEPS);
   const [bpm, setBpm] = useState<number>(DEFAULT_BPM);
@@ -41,6 +42,7 @@ const App: React.FC = () => {
     if (saved) {
       try {
         const parsed: PatternData = JSON.parse(saved);
+        if (parsed.name) setProjectName(parsed.name);
         if (parsed.tracks) setTracks(parsed.tracks);
         if (parsed.steps) setSteps(parsed.steps);
         if (parsed.grids && Array.isArray(parsed.grids)) setGrids(parsed.grids);
@@ -58,6 +60,7 @@ const App: React.FC = () => {
     if (isAudioLoaded) { 
       const stateToSave: PatternData = { 
           version: 1,
+          name: projectName,
           grids, 
           bpm, 
           currentKit, 
@@ -67,7 +70,7 @@ const App: React.FC = () => {
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(stateToSave));
     }
-  }, [grids, bpm, currentKit, tracks, steps, activeBankIndex, isAudioLoaded]);
+  }, [grids, bpm, currentKit, tracks, steps, activeBankIndex, isAudioLoaded, projectName]);
 
   // Initialize Audio Engine
   useEffect(() => {
@@ -179,6 +182,13 @@ const App: React.FC = () => {
     setStatusMessage("Pattern cleared");
     setTimeout(() => setStatusMessage(""), 2000);
   };
+  
+  const handleFactoryReset = () => {
+      if (confirm("Are you sure? This will wipe all local data and reset the app.")) {
+          localStorage.removeItem(STORAGE_KEY);
+          window.location.reload();
+      }
+  };
 
   const handleStepsChange = (newSteps: number) => {
       if (newSteps < 4 || newSteps > 64) return;
@@ -224,6 +234,7 @@ const App: React.FC = () => {
   const handleExport = () => {
     const projectData: PatternData = {
         version: 1,
+        name: projectName,
         grids,
         bpm,
         currentKit,
@@ -231,11 +242,16 @@ const App: React.FC = () => {
         steps,
         activeBankIndex
     };
+    
+    // Sanitize filename
+    const safeName = projectName.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+    const filename = `beatme-${safeName || 'project'}.json`;
+
     const blob = new Blob([JSON.stringify(projectData, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `beatme-project-${Date.now()}.json`;
+    a.download = filename;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -251,25 +267,31 @@ const App: React.FC = () => {
           try {
               const text = e.target?.result as string;
               const data = JSON.parse(text);
-              if (data.version && data.grids) {
-                  // Apply state
-                  setIsPlaying(false);
-                  audioEngineRef.current?.stop();
-                  
-                  if(data.tracks) setTracks(data.tracks);
-                  if(data.steps) setSteps(data.steps);
-                  if(data.grids) setGrids(data.grids);
-                  if(data.bpm) setBpm(data.bpm);
-                  if(data.currentKit && KITS[data.currentKit]) setCurrentKit(data.currentKit);
-                  if(data.activeBankIndex !== undefined) setActiveBankIndex(data.activeBankIndex);
-                  
-                  setStatusMessage("Project loaded successfully.");
-              } else {
-                  throw new Error("Invalid project file");
+              
+              // Validation
+              if (!data.version || !data.grids || !Array.isArray(data.grids)) {
+                  throw new Error("Invalid project structure");
               }
+
+              // Stop Playback
+              setIsPlaying(false);
+              audioEngineRef.current?.stop();
+              
+              // Apply state
+              if(data.name) setProjectName(data.name);
+              if(data.tracks) setTracks(data.tracks);
+              if(data.steps) setSteps(data.steps);
+              if(data.grids) setGrids(data.grids);
+              if(data.bpm) setBpm(data.bpm);
+              if(data.currentKit && KITS[data.currentKit]) setCurrentKit(data.currentKit);
+              if(data.activeBankIndex !== undefined) setActiveBankIndex(data.activeBankIndex);
+              
+              setStatusMessage("Project loaded successfully.");
+              setTimeout(() => setStatusMessage(""), 3000);
           } catch (err) {
               console.error(err);
-              setStatusMessage("Error loading project.");
+              setStatusMessage("Error: Invalid Project File");
+              setTimeout(() => setStatusMessage(""), 3000);
           }
       };
       reader.readAsText(file);
@@ -326,7 +348,7 @@ const App: React.FC = () => {
   return (
     <div className="flex flex-col items-center min-h-screen bg-gray-950 text-white p-4 sm:p-8">
       {/* Header */}
-      <header className="mb-8 text-center">
+      <header className="mb-6 text-center">
         <h1 className="text-4xl sm:text-5xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-purple-500 tracking-tight">
           BeatMe
         </h1>
@@ -337,12 +359,14 @@ const App: React.FC = () => {
 
       {/* Main Controls */}
       <Controls
+        projectName={projectName}
         isPlaying={isPlaying}
         bpm={bpm}
         steps={steps}
         currentKit={currentKit}
         activeBankIndex={activeBankIndex}
         reverbAmount={reverbAmount}
+        onProjectNameChange={setProjectName}
         onPlayToggle={handlePlayToggle}
         onBpmChange={setBpm}
         onStepsChange={handleStepsChange}
@@ -350,6 +374,7 @@ const App: React.FC = () => {
         onBankChange={setActiveBankIndex}
         onReverbChange={setReverbAmount}
         onClear={handleClear}
+        onReset={handleFactoryReset}
         onGenerate={handleGenerate}
         onAddTrack={handleAddTrack}
         onExport={handleExport}
@@ -389,6 +414,7 @@ const App: React.FC = () => {
       {/* Footer Info */}
       <footer className="mt-auto py-6 text-gray-600 text-xs text-center">
         <p>Built with React, Web Audio API & Google Gemini.</p>
+        <p className="mt-1 opacity-50">App data is stored locally on your device.</p>
         {!process.env.API_KEY && (
            <p className="text-red-500 mt-2">Warning: API_KEY not detected. AI features will fail.</p>
         )}

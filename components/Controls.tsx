@@ -3,12 +3,14 @@ import { KITS, INSTRUMENTS } from '../constants';
 import { InstrumentType } from '../types';
 
 interface ControlsProps {
+  projectName: string;
   isPlaying: boolean;
   bpm: number;
   steps: number;
   currentKit: string;
   activeBankIndex: number;
   reverbAmount: number;
+  onProjectNameChange: (name: string) => void;
   onPlayToggle: () => void;
   onBpmChange: (bpm: number) => void;
   onStepsChange: (steps: number) => void;
@@ -16,6 +18,7 @@ interface ControlsProps {
   onBankChange: (index: number) => void;
   onReverbChange: (amount: number) => void;
   onClear: () => void;
+  onReset: () => void;
   onGenerate: (prompt: string) => void;
   onAddTrack: (type: InstrumentType) => void;
   onExport: () => void;
@@ -25,12 +28,14 @@ interface ControlsProps {
 }
 
 const Controls: React.FC<ControlsProps> = ({
+  projectName,
   isPlaying,
   bpm,
   steps,
   currentKit,
   activeBankIndex,
   reverbAmount,
+  onProjectNameChange,
   onPlayToggle,
   onBpmChange,
   onStepsChange,
@@ -38,6 +43,7 @@ const Controls: React.FC<ControlsProps> = ({
   onBankChange,
   onReverbChange,
   onClear,
+  onReset,
   onGenerate,
   onAddTrack,
   onExport,
@@ -60,6 +66,8 @@ const Controls: React.FC<ControlsProps> = ({
       if (e.target.files && e.target.files[0]) {
           onImport(e.target.files[0]);
       }
+      // Reset input value so the same file can be selected again if needed
+      if (e.target) e.target.value = '';
   };
 
   // Common time signatures mapped to steps
@@ -215,90 +223,108 @@ const Controls: React.FC<ControlsProps> = ({
              </div>
         </div>
 
-        {/* SECTION 3: Actions & AI (Right) */}
+        {/* SECTION 3: Project & AI (Right) */}
         <div className="p-4 flex flex-col justify-between gap-4 md:w-1/3">
              
-             {/* Toolbar */}
+             {/* Project Name */}
              <div className="flex flex-col">
-                 <label className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-2">Tools</label>
-                 <div className="flex gap-2">
-                    {/* Add Track */}
-                    <div className="relative flex-1">
-                        <button 
-                            onClick={() => setIsAddMenuOpen(!isAddMenuOpen)}
-                            className="w-full bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs font-medium rounded-lg border border-gray-700 p-2 h-9 flex items-center justify-center gap-2 transition-colors"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                            </svg>
-                            Add Track
-                        </button>
-                        {isAddMenuOpen && (
-                            <div className="absolute top-full right-0 mt-2 w-48 bg-gray-800 border border-gray-700 rounded-lg shadow-xl z-50 py-1 max-h-48 overflow-y-auto">
-                                {INSTRUMENTS.map((inst) => (
-                                <button
-                                    key={inst.id}
-                                    onClick={() => {
-                                    onAddTrack(inst.id);
-                                    setIsAddMenuOpen(false);
-                                    }}
-                                    className="w-full text-left px-4 py-2 text-xs text-gray-300 hover:bg-gray-700 hover:text-white flex items-center gap-2"
-                                >
-                                    <div className={`w-2 h-2 rounded-full ${inst.color}`}></div>
-                                    {inst.name}
-                                </button>
-                                ))}
-                            </div>
-                        )}
-                        {isAddMenuOpen && (
-                            <div className="fixed inset-0 z-40" onClick={() => setIsAddMenuOpen(false)}></div>
-                        )}
-                    </div>
+                <label className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-1">Project Name</label>
+                <input 
+                    type="text" 
+                    value={projectName}
+                    onChange={(e) => onProjectNameChange(e.target.value)}
+                    className="bg-gray-950 border border-gray-800 rounded px-2 py-1 text-sm text-gray-300 focus:text-white focus:border-cyan-600 outline-none transition-colors"
+                />
+             </div>
 
-                    {/* Clear Button */}
-                     <button
-                        onClick={onClear}
-                        className="bg-gray-800 hover:bg-red-900/30 hover:text-red-400 hover:border-red-900 text-gray-400 text-xs rounded-lg border border-gray-700 p-2 h-9 flex items-center justify-center w-9 transition-colors"
-                        title="Clear Pattern"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                    </button>
-                 </div>
-                 <div className="flex gap-2 mt-2">
-                     <button 
-                        onClick={onExport}
-                        className="flex-1 bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs rounded-lg border border-gray-700 p-2 h-8 flex items-center justify-center gap-1"
-                        title="Save Project JSON"
-                     >
-                         <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                         </svg>
-                         Export
-                    </button>
+             {/* Tools Row */}
+             <div className="flex gap-2">
+                {/* Add Track */}
+                <div className="relative flex-1">
                     <button 
-                        onClick={() => fileInputRef.current?.click()}
-                        className="flex-1 bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs rounded-lg border border-gray-700 p-2 h-8 flex items-center justify-center gap-1"
-                        title="Load Project JSON"
+                        onClick={() => setIsAddMenuOpen(!isAddMenuOpen)}
+                        className="w-full bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs font-medium rounded-lg border border-gray-700 h-8 flex items-center justify-center gap-2 transition-colors"
                     >
-                         <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                         </svg>
-                         Import
+                        + Add Track
                     </button>
-                    <input 
-                        type="file" 
-                        ref={fileInputRef} 
-                        onChange={handleFileChange} 
-                        accept=".json" 
-                        className="hidden" 
-                    />
-                 </div>
+                    {isAddMenuOpen && (
+                        <div className="absolute top-full right-0 mt-2 w-48 bg-gray-800 border border-gray-700 rounded-lg shadow-xl z-50 py-1 max-h-48 overflow-y-auto">
+                            {INSTRUMENTS.map((inst) => (
+                            <button
+                                key={inst.id}
+                                onClick={() => {
+                                onAddTrack(inst.id);
+                                setIsAddMenuOpen(false);
+                                }}
+                                className="w-full text-left px-4 py-2 text-xs text-gray-300 hover:bg-gray-700 hover:text-white flex items-center gap-2"
+                            >
+                                <div className={`w-2 h-2 rounded-full ${inst.color}`}></div>
+                                {inst.name}
+                            </button>
+                            ))}
+                        </div>
+                    )}
+                    {isAddMenuOpen && (
+                        <div className="fixed inset-0 z-40" onClick={() => setIsAddMenuOpen(false)}></div>
+                    )}
+                </div>
+
+                {/* Clear Grid */}
+                 <button
+                    onClick={onClear}
+                    className="bg-gray-800 hover:bg-red-900/30 hover:text-red-400 hover:border-red-900 text-gray-400 text-xs rounded-lg border border-gray-700 w-8 h-8 flex items-center justify-center transition-colors"
+                    title="Clear Current Pattern"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                </button>
+             </div>
+
+             {/* Export/Import/Reset Row */}
+             <div className="flex gap-2">
+                 <button 
+                    onClick={onExport}
+                    className="flex-1 bg-gray-800 hover:bg-cyan-900/30 hover:text-cyan-400 hover:border-cyan-800 text-gray-300 text-xs rounded-lg border border-gray-700 h-8 flex items-center justify-center gap-1 transition-all"
+                    title="Download Project"
+                 >
+                     <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                     </svg>
+                     Export
+                </button>
+                <button 
+                    onClick={() => fileInputRef.current?.click()}
+                    className="flex-1 bg-gray-800 hover:bg-purple-900/30 hover:text-purple-400 hover:border-purple-800 text-gray-300 text-xs rounded-lg border border-gray-700 h-8 flex items-center justify-center gap-1 transition-all"
+                    title="Load Project"
+                >
+                     <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                     </svg>
+                     Import
+                </button>
+                <input 
+                    type="file" 
+                    ref={fileInputRef} 
+                    onChange={handleFileChange} 
+                    accept=".json" 
+                    className="hidden" 
+                />
+                
+                {/* Factory Reset */}
+                <button 
+                    onClick={onReset}
+                    className="w-8 h-8 bg-gray-900 hover:bg-red-600 text-gray-600 hover:text-white rounded-lg border border-gray-800 hover:border-red-500 flex items-center justify-center transition-all"
+                    title="Reset All Data (Factory Reset)"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                </button>
              </div>
 
              {/* AI Prompt */}
-             <form onSubmit={handleGenerate} className="relative group mt-auto">
+             <form onSubmit={handleGenerate} className="relative group mt-auto pt-2">
                 <div className="absolute -inset-0.5 bg-gradient-to-r from-cyan-600 to-purple-600 rounded-lg blur opacity-20 group-hover:opacity-40 transition duration-1000"></div>
                 <div className="relative flex gap-2 bg-gray-900 p-1.5 rounded-lg border border-gray-800">
                     <input

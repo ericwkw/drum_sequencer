@@ -24,6 +24,7 @@ export type GridPattern = boolean[][];
 
 export interface PatternData {
   version: number;
+  name?: string; // Project Name
   bpm: number;
   steps: number;
   currentKit: string;
