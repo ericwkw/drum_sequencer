@@ -133,8 +133,8 @@ const SequencerGrid: React.FC<SequencerGridProps> = ({
                     bgClass = "bg-gray-800/80";
                   }
 
-                  const activeScale = active && isCurrent && !track.muted ? "scale-110 brightness-125 shadow-[0_0_10px_rgba(255,255,255,0.5)] z-10" : "";
-                  const hoverState = !isLoaded ? "cursor-not-allowed" : "cursor-pointer hover:bg-gray-700 hover:scale-105";
+                  const activeScale = active && isCurrent && !track.muted ? "scale-105 brightness-125 shadow-[0_0_10px_rgba(255,255,255,0.5)] z-10" : "";
+                  const hoverState = !isLoaded ? "cursor-not-allowed" : "cursor-pointer hover:bg-gray-700";
                   const playHeadIndicator = isCurrent ? "ring-1 ring-white/20" : "";
 
                   return (
@@ -143,7 +143,7 @@ const SequencerGrid: React.FC<SequencerGridProps> = ({
                       onClick={(e) => isLoaded && onToggle(rowIndex, stepIndex, e)}
                       disabled={!isLoaded}
                       className={`
-                        aspect-square rounded-md transition-all duration-75 ease-out
+                        h-14 w-full min-w-[40px] rounded-md transition-all duration-75 ease-out
                         ${bgClass}
                         ${activeScale}
                         ${hoverState}

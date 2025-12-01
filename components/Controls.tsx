@@ -63,7 +63,7 @@ const Controls: React.FC<ControlsProps> = ({
   };
 
   return (
-    <div className="flex flex-col gap-4 w-full max-w-[1400px] mx-auto mb-6">
+    <div className="flex flex-col gap-4 w-full max-w-[1800px] mx-auto mb-6">
       
       {/* Main Dashboard Panel */}
       <div className="bg-gray-900 rounded-xl border border-gray-800 shadow-xl overflow-hidden flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-gray-800">

@@ -359,7 +359,7 @@ const App: React.FC = () => {
       />
 
       {/* Grid */}
-      <div className="w-full max-w-4xl relative">
+      <div className="w-full max-w-[1800px] relative">
         <SequencerGrid
           grid={grids[activeBankIndex]}
           tracks={tracks}
