@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from 'react';
 import { KITS, INSTRUMENTS } from '../constants';
 import { InstrumentType } from '../types';
@@ -7,6 +8,7 @@ interface ControlsProps {
   isPlaying: boolean;
   bpm: number;
   steps: number;
+  swing: number;
   currentKit: string;
   activeBankIndex: number;
   reverbAmount: number;
@@ -14,8 +16,10 @@ interface ControlsProps {
   onPlayToggle: () => void;
   onBpmChange: (bpm: number) => void;
   onStepsChange: (steps: number) => void;
+  onSwingChange: (swing: number) => void;
   onKitChange: (kitKey: string) => void;
   onBankChange: (index: number) => void;
+  onCopyBank: (targetIndex: number) => void;
   onReverbChange: (amount: number) => void;
   onClear: () => void;
   onReset: () => void;
@@ -32,6 +36,7 @@ const Controls: React.FC<ControlsProps> = ({
   isPlaying,
   bpm,
   steps,
+  swing,
   currentKit,
   activeBankIndex,
   reverbAmount,
@@ -39,8 +44,10 @@ const Controls: React.FC<ControlsProps> = ({
   onPlayToggle,
   onBpmChange,
   onStepsChange,
+  onSwingChange,
   onKitChange,
   onBankChange,
+  onCopyBank,
   onReverbChange,
   onClear,
   onReset,
@@ -82,6 +89,8 @@ const Controls: React.FC<ControlsProps> = ({
       { label: 'Max (64)', value: 64 },
   ];
 
+  const banks = ['A', 'B', 'C', 'D'];
+
   return (
     <div className="flex flex-col gap-4 w-full max-w-[1800px] mx-auto mb-6">
       
@@ -112,26 +121,45 @@ const Controls: React.FC<ControlsProps> = ({
              </div>
 
              <div className="grid grid-cols-2 gap-3">
-                {/* BPM */}
-                <div className="bg-gray-950 rounded-lg p-2 border border-gray-700 flex flex-col">
-                    <label className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-1">Tempo</label>
-                    <div className="flex items-center gap-2 h-full">
+                {/* BPM & Swing Group */}
+                <div className="flex flex-col gap-2">
+                    {/* BPM */}
+                    <div className="bg-gray-950 rounded-lg p-2 border border-gray-700 flex flex-col">
+                        <label className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-1">Tempo</label>
+                        <div className="flex items-center gap-2 h-full">
+                            <input
+                                type="number"
+                                min="60"
+                                max="200"
+                                value={bpm}
+                                onChange={(e) => onBpmChange(Number(e.target.value))}
+                                className="bg-transparent text-cyan-400 font-mono text-xl font-bold w-full focus:outline-none"
+                            />
+                            <span className="text-xs text-gray-600 font-bold">BPM</span>
+                        </div>
+                    </div>
+                    {/* Swing */}
+                    <div className="bg-gray-950 rounded-lg p-2 border border-gray-700 flex flex-col">
+                        <label className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-1 flex justify-between">
+                            <span>Swing</span>
+                            <span className="text-cyan-400">{Math.round(swing * 100)}%</span>
+                        </label>
                         <input
-                            type="number"
-                            min="60"
-                            max="200"
-                            value={bpm}
-                            onChange={(e) => onBpmChange(Number(e.target.value))}
-                            className="bg-transparent text-cyan-400 font-mono text-2xl font-bold w-full focus:outline-none"
+                            type="range"
+                            min="0"
+                            max="1"
+                            step="0.05"
+                            value={swing}
+                            onChange={(e) => onSwingChange(parseFloat(e.target.value))}
+                            className="w-full h-1 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-cyan-500"
                         />
-                        <span className="text-xs text-gray-600 font-bold">BPM</span>
                     </div>
                 </div>
 
                 {/* Steps / Time Signature */}
-                <div className="bg-gray-950 rounded-lg p-2 border border-gray-700 flex flex-col">
+                <div className="bg-gray-950 rounded-lg p-2 border border-gray-700 flex flex-col justify-between">
                      <label className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-1 flex justify-between">
-                        <span>Time Sig / Steps</span>
+                        <span>Time Sig</span>
                      </label>
                      
                      {/* Preset Dropdown */}
@@ -149,7 +177,7 @@ const Controls: React.FC<ControlsProps> = ({
                      </select>
 
                      {/* Manual Stepper */}
-                     <div className="flex items-center justify-between bg-gray-900 rounded px-1">
+                     <div className="flex items-center justify-between bg-gray-900 rounded px-1 mt-auto">
                          <button 
                             onClick={() => onStepsChange(Math.max(4, steps - 1))}
                             className="text-gray-500 hover:text-white px-2 text-lg leading-none"
@@ -168,12 +196,27 @@ const Controls: React.FC<ControlsProps> = ({
         <div className="p-4 flex flex-col justify-between gap-4 md:w-1/3">
              {/* Bank Selector */}
              <div className="flex flex-col">
-                 <label className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-2 flex justify-between">
-                     <span>Pattern Bank</span>
-                     <span className="text-gray-600">Active: {['A','B','C','D'][activeBankIndex]}</span>
-                 </label>
+                 <div className="flex justify-between items-end mb-2">
+                     <label className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Pattern Bank</label>
+                     <select 
+                        className="bg-transparent text-[10px] text-gray-400 hover:text-white border-none focus:ring-0 cursor-pointer p-0"
+                        onChange={(e) => {
+                            if(e.target.value) {
+                                onCopyBank(parseInt(e.target.value));
+                                e.target.value = ""; // reset
+                            }
+                        }}
+                        defaultValue=""
+                     >
+                         <option value="" disabled>Copy to...</option>
+                         {banks.map((b, i) => i !== activeBankIndex && (
+                             <option key={b} value={i}>Bank {b}</option>
+                         ))}
+                     </select>
+                 </div>
+                 
                  <div className="grid grid-cols-4 gap-2 bg-gray-950 p-1 rounded-lg border border-gray-800">
-                    {['A', 'B', 'C', 'D'].map((bank, idx) => (
+                    {banks.map((bank, idx) => (
                         <button
                             key={bank}
                             onClick={() => onBankChange(idx)}

@@ -1,3 +1,4 @@
+
 export type InstrumentType = 'kick' | 'snare' | 'hihat' | 'clap';
 
 export interface Instrument {
@@ -13,6 +14,7 @@ export interface Track {
   color: string;
   volume: number; // 0.0 to 1.0
   muted: boolean;
+  pitch: number; // -12 to +12 semitones
 }
 
 export interface DrumKit {
@@ -26,6 +28,7 @@ export interface PatternData {
   version: number;
   name?: string; // Project Name
   bpm: number;
+  swing: number; // 0.0 to 1.0
   steps: number;
   currentKit: string;
   tracks: Track[];

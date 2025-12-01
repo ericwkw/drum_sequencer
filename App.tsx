@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { createEmptyGrid, DEFAULT_BPM, KITS, DEFAULT_KIT, DEFAULT_STEPS, DEFAULT_TRACKS, INSTRUMENTS } from './constants';
 import { GridPattern, Track, InstrumentType, PatternData } from './types';
@@ -14,6 +15,7 @@ const App: React.FC = () => {
   const [tracks, setTracks] = useState<Track[]>(DEFAULT_TRACKS);
   const [steps, setSteps] = useState<number>(DEFAULT_STEPS);
   const [bpm, setBpm] = useState<number>(DEFAULT_BPM);
+  const [swing, setSwing] = useState<number>(0);
   const [currentKit, setCurrentKit] = useState<string>(DEFAULT_KIT);
   
   // Banking State: 4 Grids
@@ -45,6 +47,7 @@ const App: React.FC = () => {
         if (parsed.name) setProjectName(parsed.name);
         if (parsed.tracks) setTracks(parsed.tracks);
         if (parsed.steps) setSteps(parsed.steps);
+        if (parsed.swing) setSwing(parsed.swing);
         if (parsed.grids && Array.isArray(parsed.grids)) setGrids(parsed.grids);
         if (parsed.bpm) setBpm(parsed.bpm);
         if (parsed.currentKit && KITS[parsed.currentKit]) setCurrentKit(parsed.currentKit);
@@ -62,7 +65,8 @@ const App: React.FC = () => {
           version: 1,
           name: projectName,
           grids, 
-          bpm, 
+          bpm,
+          swing,
           currentKit, 
           tracks, 
           steps,
@@ -70,7 +74,7 @@ const App: React.FC = () => {
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(stateToSave));
     }
-  }, [grids, bpm, currentKit, tracks, steps, activeBankIndex, isAudioLoaded, projectName]);
+  }, [grids, bpm, swing, currentKit, tracks, steps, activeBankIndex, isAudioLoaded, projectName]);
 
   // Initialize Audio Engine
   useEffect(() => {
@@ -84,6 +88,7 @@ const App: React.FC = () => {
       setStatusMessage(`Loading ${KITS[currentKit].name}...`);
       await engine.initialize();
       engine.setReverbAmount(reverbAmount);
+      engine.setSwing(swing);
       await engine.loadKit(KITS[currentKit]);
       
       setIsAudioLoaded(true);
@@ -116,6 +121,13 @@ const App: React.FC = () => {
           audioEngineRef.current.setReverbAmount(reverbAmount);
       }
   }, [reverbAmount]);
+
+  // Handle Swing Change
+  useEffect(() => {
+    if(audioEngineRef.current) {
+        audioEngineRef.current.setSwing(swing);
+    }
+  }, [swing]);
 
   // Update Engine when Grid/BPM/Tracks/Steps/Bank changes
   useEffect(() => {
@@ -182,6 +194,19 @@ const App: React.FC = () => {
     setStatusMessage("Pattern cleared");
     setTimeout(() => setStatusMessage(""), 2000);
   };
+
+  const handleCopyBank = (targetIndex: number) => {
+      if (targetIndex === activeBankIndex) return;
+      
+      setGrids(prev => {
+          const newGrids = [...prev];
+          // Deep copy current grid to target
+          newGrids[targetIndex] = prev[activeBankIndex].map(row => [...row]);
+          return newGrids;
+      });
+      setStatusMessage(`Copied Bank ${['A','B','C','D'][activeBankIndex]} to ${['A','B','C','D'][targetIndex]}`);
+      setTimeout(() => setStatusMessage(""), 2500);
+  };
   
   const handleFactoryReset = () => {
       if (confirm("Are you sure? This will wipe all local data and reset the app.")) {
@@ -217,7 +242,8 @@ const App: React.FC = () => {
           name: instrumentDef.name,
           color: instrumentDef.color,
           volume: 0.8,
-          muted: false
+          muted: false,
+          pitch: 0
       };
 
       setTracks(prev => [...prev, newTrack]);
@@ -237,6 +263,7 @@ const App: React.FC = () => {
         name: projectName,
         grids,
         bpm,
+        swing,
         currentKit,
         tracks,
         steps,
@@ -283,6 +310,7 @@ const App: React.FC = () => {
               if(data.steps) setSteps(data.steps);
               if(data.grids) setGrids(data.grids);
               if(data.bpm) setBpm(data.bpm);
+              if(data.swing) setSwing(data.swing);
               if(data.currentKit && KITS[data.currentKit]) setCurrentKit(data.currentKit);
               if(data.activeBankIndex !== undefined) setActiveBankIndex(data.activeBankIndex);
               
@@ -363,6 +391,7 @@ const App: React.FC = () => {
         isPlaying={isPlaying}
         bpm={bpm}
         steps={steps}
+        swing={swing}
         currentKit={currentKit}
         activeBankIndex={activeBankIndex}
         reverbAmount={reverbAmount}
@@ -370,8 +399,10 @@ const App: React.FC = () => {
         onPlayToggle={handlePlayToggle}
         onBpmChange={setBpm}
         onStepsChange={handleStepsChange}
+        onSwingChange={setSwing}
         onKitChange={setCurrentKit}
         onBankChange={setActiveBankIndex}
+        onCopyBank={handleCopyBank}
         onReverbChange={setReverbAmount}
         onClear={handleClear}
         onReset={handleFactoryReset}

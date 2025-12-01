@@ -1,3 +1,4 @@
+
 import { DrumKit, Track } from '../types';
 
 export class AudioEngine {
@@ -22,6 +23,7 @@ export class AudioEngine {
   private isPlaying: boolean = false;
   private bpm: number = 120;
   private steps: number = 16;
+  private swing: number = 0; // 0.0 to 1.0
   
   private activeGrid: boolean[][] = [];
   private activeTracks: Track[] = [];
@@ -120,6 +122,10 @@ export class AudioEngine {
     this.bpm = bpm;
   }
 
+  public setSwing(swing: number) {
+    this.swing = swing;
+  }
+
   public async start() {
     if (this.isPlaying || !this.context) return;
     
@@ -141,15 +147,33 @@ export class AudioEngine {
     this.onStepPlay(0); 
   }
 
-  public playOneShot(instrumentId: string, volume: number = 1.0) {
+  public playOneShot(instrumentId: string, volume: number = 1.0, pitch: number = 0) {
       this.resumeContext().then(() => {
-          this.playSample(instrumentId, this.context!.currentTime, volume, false);
+          this.playSample(instrumentId, this.context!.currentTime, volume, pitch, false);
       });
   }
 
   private nextNote() {
     const secondsPerBeat = 60.0 / this.bpm;
-    this.nextNoteTime += 0.25 * secondsPerBeat; 
+    const baseSixteenth = 0.25 * secondsPerBeat;
+    
+    // Apply Swing
+    // Swing affects odd-numbered 16th notes (1, 3, 5...).
+    // Standard: Even (0) -> 0.25s -> Odd (1) -> 0.25s -> Even (2)
+    // Swing:    Even (0) -> 0.25*(1+s) -> Odd (1) -> 0.25*(1-s) -> Even (2)
+    // We cap swing impact at 0.33 to prevent breaking time (triplet feel max)
+    const swingFactor = this.swing * 0.33; 
+
+    let duration = baseSixteenth;
+    if (this.currentStep % 2 === 0) {
+        // Current is Even, next is Odd. Lengthen this step.
+        duration = baseSixteenth * (1 + swingFactor);
+    } else {
+        // Current is Odd, next is Even. Shorten this step.
+        duration = baseSixteenth * (1 - swingFactor);
+    }
+
+    this.nextNoteTime += duration;
 
     this.currentStep++;
     if (this.currentStep >= this.steps) {
@@ -167,18 +191,24 @@ export class AudioEngine {
       if (row && row[beatNumber] && this.activeTracks[rowIndex]) {
         const track = this.activeTracks[rowIndex];
         if (!track.muted) {
-            this.playSample(track.instrumentId, time, track.volume, true);
+            this.playSample(track.instrumentId, time, track.volume, track.pitch || 0, true);
         }
       }
     });
   }
 
-  private playSample(instrumentId: string, time: number, volume: number, sendToReverb: boolean) {
+  private playSample(instrumentId: string, time: number, volume: number, pitch: number, sendToReverb: boolean) {
     if (!this.context || !this.buffers[instrumentId]) return;
 
     // Source
     const source = this.context.createBufferSource();
     source.buffer = this.buffers[instrumentId];
+    
+    // Pitch Shift
+    // playbackRate.value = 2 ^ (semitones / 12)
+    if (pitch !== 0) {
+        source.playbackRate.value = Math.pow(2, pitch / 12);
+    }
 
     // Track Volume Gain
     const gainNode = this.context.createGain();

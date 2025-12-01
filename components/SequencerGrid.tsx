@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { GridPattern, Track } from '../types';
 
@@ -67,9 +68,9 @@ const SequencerGrid: React.FC<SequencerGridProps> = ({
           {tracks.map((track, rowIndex) => (
             <div key={track.id} className="flex items-center gap-4 group/row">
               {/* Instrument Controls */}
-              <div className="w-64 shrink-0 flex items-center justify-between gap-3 bg-gray-900/50 p-2 rounded border border-transparent hover:border-gray-800 transition-colors">
+              <div className="w-64 shrink-0 flex items-center justify-between gap-2 bg-gray-900/50 p-2 rounded border border-transparent hover:border-gray-800 transition-colors">
                 
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex items-center gap-1 shrink-0">
                     {/* Delete */}
                     <button 
                         onClick={() => onRemoveTrack(rowIndex)}
@@ -97,8 +98,9 @@ const SequencerGrid: React.FC<SequencerGridProps> = ({
                     </button>
                 </div>
 
-                {/* Volume */}
-                <div className="flex-1 px-1 group/vol flex items-center">
+                {/* Mixer: Volume & Pitch */}
+                <div className="flex-1 flex flex-col gap-1 px-1">
+                    {/* Volume */}
                     <input 
                         type="range" 
                         min="0" 
@@ -109,10 +111,27 @@ const SequencerGrid: React.FC<SequencerGridProps> = ({
                         className="w-full h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-cyan-500 hover:accent-cyan-400"
                         title={`Volume: ${Math.round(track.volume * 100)}%`}
                     />
+                    
+                    {/* Tune (Pitch) */}
+                    <div className="flex items-center gap-1">
+                         <input 
+                            type="range" 
+                            min="-12" 
+                            max="12" 
+                            step="1"
+                            value={track.pitch || 0}
+                            onChange={(e) => onTrackChange(rowIndex, { pitch: parseInt(e.target.value) })}
+                            className="flex-1 h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-purple-500 hover:accent-purple-400"
+                            title={`Tune: ${track.pitch || 0} st`}
+                         />
+                         <span className="text-[8px] font-mono text-gray-500 w-3 text-right">
+                             {track.pitch || 0}
+                         </span>
+                    </div>
                 </div>
 
                 {/* Name */}
-                <div className="w-20 text-right relative shrink-0">
+                <div className="w-16 text-right relative shrink-0 overflow-hidden">
                     <span className={`text-sm font-bold tracking-wider uppercase transition-colors truncate block ${isLoaded ? 'text-gray-300' : 'text-gray-600'} ${track.muted ? 'line-through opacity-50' : ''}`}>
                     {track.name}
                     </span>

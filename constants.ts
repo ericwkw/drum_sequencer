@@ -1,3 +1,4 @@
+
 import { Instrument, InstrumentType, GridPattern, DrumKit, Track } from './types';
 
 export const INSTRUMENTS: Instrument[] = [
@@ -58,10 +59,10 @@ export const DEFAULT_BPM = 120;
 export const DEFAULT_KIT = "CR78";
 
 export const DEFAULT_TRACKS: Track[] = [
-  { id: 'track-0', instrumentId: 'kick', name: 'Kick', color: 'bg-rose-500', volume: 0.9, muted: false },
-  { id: 'track-1', instrumentId: 'snare', name: 'Snare', color: 'bg-amber-500', volume: 0.8, muted: false },
-  { id: 'track-2', instrumentId: 'hihat', name: 'Hi-Hat', color: 'bg-emerald-500', volume: 0.7, muted: false },
-  { id: 'track-3', instrumentId: 'clap', name: 'Clap', color: 'bg-violet-500', volume: 0.8, muted: false }
+  { id: 'track-0', instrumentId: 'kick', name: 'Kick', color: 'bg-rose-500', volume: 0.9, muted: false, pitch: 0 },
+  { id: 'track-1', instrumentId: 'snare', name: 'Snare', color: 'bg-amber-500', volume: 0.8, muted: false, pitch: 0 },
+  { id: 'track-2', instrumentId: 'hihat', name: 'Hi-Hat', color: 'bg-emerald-500', volume: 0.7, muted: false, pitch: 0 },
+  { id: 'track-3', instrumentId: 'clap', name: 'Clap', color: 'bg-violet-500', volume: 0.8, muted: false, pitch: 0 }
 ];
 
 export const createEmptyGrid = (tracks: Track[], steps: number): GridPattern => {
