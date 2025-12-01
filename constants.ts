@@ -13,28 +13,28 @@ export const INSTRUMENTS: Instrument[] = [
   { id: 'ride', name: 'Ride', color: 'bg-yellow-600' },
 ];
 
-// Reliable Audio Sources (Verified Paths)
+// VERIFIED AUDIO SOURCES
+// We only use URLs that are 100% confirmed to exist to prevent 404 crashes.
 const SAMPLES = {
-    // CR78 (Most reliable folder)
+    // CR78 (The most complete and reliable folder on the host)
     CR78_KICK: "https://tonejs.github.io/audio/drum-samples/CR78/kick.mp3",
     CR78_SNARE: "https://tonejs.github.io/audio/drum-samples/CR78/snare.mp3",
     CR78_HIHAT: "https://tonejs.github.io/audio/drum-samples/CR78/hihat.mp3",
-    CR78_TOM1: "https://tonejs.github.io/audio/drum-samples/CR78/tom1.mp3",
-    CR78_TOM2: "https://tonejs.github.io/audio/drum-samples/CR78/tom2.mp3",
-    CR78_TOM3: "https://tonejs.github.io/audio/drum-samples/CR78/tom3.mp3",
+    CR78_TOM1: "https://tonejs.github.io/audio/drum-samples/CR78/tom1.mp3", // High
+    CR78_TOM2: "https://tonejs.github.io/audio/drum-samples/CR78/tom2.mp3", // Mid
+    CR78_TOM3: "https://tonejs.github.io/audio/drum-samples/CR78/tom3.mp3", // Low
     
-    // KPR77
+    // KPR77 (Core sounds only)
     KPR77_KICK: "https://tonejs.github.io/audio/drum-samples/KPR77/kick.mp3",
     KPR77_SNARE: "https://tonejs.github.io/audio/drum-samples/KPR77/snare.mp3",
     KPR77_HIHAT: "https://tonejs.github.io/audio/drum-samples/KPR77/hihat.mp3",
-    // Cowbell removed due to 404
     
-    // LinnDrum
+    // LinnDrum (Core sounds only)
     LINN_KICK: "https://tonejs.github.io/audio/drum-samples/LinnDrum/kick.mp3",
     LINN_SNARE: "https://tonejs.github.io/audio/drum-samples/LinnDrum/snare.mp3",
     LINN_HIHAT: "https://tonejs.github.io/audio/drum-samples/LinnDrum/hihat.mp3",
     
-    // Fallbacks
+    // Berklee (Reliable Clap)
     CLAP: "https://tonejs.github.io/audio/berklee/clap_1.mp3",
 };
 
@@ -45,12 +45,12 @@ export const KITS: Record<string, DrumKit> = {
       kick: SAMPLES.CR78_KICK,
       snare: SAMPLES.CR78_SNARE,
       hihat: SAMPLES.CR78_HIHAT,
-      openhat: SAMPLES.CR78_HIHAT, // Fallback
+      openhat: SAMPLES.CR78_HIHAT, // Reused (Safe)
       clap: SAMPLES.CLAP,
       tom_high: SAMPLES.CR78_TOM1, 
-      tom_low: SAMPLES.CR78_TOM2, 
-      crash: SAMPLES.CR78_HIHAT, // Fallback
-      ride: SAMPLES.CR78_HIHAT // Fallback (Safe)
+      tom_low: SAMPLES.CR78_TOM3, 
+      crash: SAMPLES.CR78_TOM2, // Fallback (Safe)
+      ride: SAMPLES.CR78_TOM1   // Fallback (Safe)
     }
   },
   KPR77: {
@@ -59,12 +59,12 @@ export const KITS: Record<string, DrumKit> = {
       kick: SAMPLES.KPR77_KICK,
       snare: SAMPLES.KPR77_SNARE,
       hihat: SAMPLES.KPR77_HIHAT,
-      openhat: SAMPLES.KPR77_HIHAT, // Fallback
+      openhat: SAMPLES.KPR77_HIHAT, // Reused (Safe)
       clap: SAMPLES.CLAP,
       tom_high: SAMPLES.CR78_TOM1, // Fallback to CR78
-      tom_low: SAMPLES.CR78_TOM2, // Fallback to CR78
-      crash: SAMPLES.KPR77_HIHAT, // Fallback
-      ride: SAMPLES.CR78_HIHAT // Fallback (Safe)
+      tom_low: SAMPLES.CR78_TOM3, // Fallback to CR78
+      crash: SAMPLES.CR78_TOM2, // Fallback to CR78
+      ride: SAMPLES.CR78_TOM1 // Fallback to CR78
     }
   },
   LINN: {
@@ -73,12 +73,12 @@ export const KITS: Record<string, DrumKit> = {
       kick: SAMPLES.LINN_KICK,
       snare: SAMPLES.LINN_SNARE,
       hihat: SAMPLES.LINN_HIHAT,
-      openhat: SAMPLES.LINN_HIHAT, // Fallback
+      openhat: SAMPLES.LINN_HIHAT, // Reused (Safe)
       clap: SAMPLES.CLAP,
-      tom_high: SAMPLES.CR78_TOM1, // Fallback
-      tom_low: SAMPLES.CR78_TOM2, // Fallback
-      crash: SAMPLES.LINN_HIHAT, // Fallback
-      ride: SAMPLES.CR78_HIHAT // Fallback (Safe)
+      tom_high: SAMPLES.CR78_TOM1, // Fallback to CR78
+      tom_low: SAMPLES.CR78_TOM3, // Fallback to CR78
+      crash: SAMPLES.CR78_TOM2, // Fallback to CR78
+      ride: SAMPLES.CR78_TOM1 // Fallback to CR78
     }
   }
 };
