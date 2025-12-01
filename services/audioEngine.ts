@@ -101,11 +101,14 @@ export class AudioEngine {
     const loadPromises = Object.entries(kit.samples).map(async ([id, url]) => {
       try {
         const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
         const arrayBuffer = await response.arrayBuffer();
         const audioBuffer = await this.context!.decodeAudioData(arrayBuffer);
         this.buffers[id] = audioBuffer;
       } catch (e) {
-        console.error(`Failed to load sample for ${id}`, e);
+        console.error(`Failed to load sample for ${id} from ${url}`, e);
       }
     });
 

@@ -28,28 +28,28 @@ export const KITS: Record<string, DrumKit> = {
   CR78: {
     name: "Classic (CR78)",
     samples: {
-      kick: "https://cdn.jsdelivr.net/gh/Tonejs/audio/drum-samples/CR78/kick.mp3",
-      snare: "https://cdn.jsdelivr.net/gh/Tonejs/audio/drum-samples/CR78/snare.mp3",
-      hihat: "https://cdn.jsdelivr.net/gh/Tonejs/audio/drum-samples/CR78/hihat.mp3",
-      clap: "https://cdn.jsdelivr.net/gh/Tonejs/audio/drum-samples/CR78/tom1.mp3"
+      kick: "https://tonejs.github.io/audio/drum-samples/CR78/kick.mp3",
+      snare: "https://tonejs.github.io/audio/drum-samples/CR78/snare.mp3",
+      hihat: "https://tonejs.github.io/audio/drum-samples/CR78/hihat.mp3",
+      clap: "https://tonejs.github.io/audio/berklee/clap_1.mp3" // Fallback to Berklee clap
     }
   },
   KPR77: {
     name: "Analog (KPR77)",
     samples: {
-      kick: "https://cdn.jsdelivr.net/gh/Tonejs/audio/drum-samples/KPR77/kick.mp3",
-      snare: "https://cdn.jsdelivr.net/gh/Tonejs/audio/drum-samples/KPR77/snare.mp3",
-      hihat: "https://cdn.jsdelivr.net/gh/Tonejs/audio/drum-samples/KPR77/hihat.mp3",
-      clap: "https://cdn.jsdelivr.net/gh/Tonejs/audio/drum-samples/KPR77/clap.mp3"
+      kick: "https://tonejs.github.io/audio/drum-samples/KPR77/kick.mp3",
+      snare: "https://tonejs.github.io/audio/drum-samples/KPR77/snare.mp3",
+      hihat: "https://tonejs.github.io/audio/drum-samples/KPR77/hihat.mp3",
+      clap: "https://tonejs.github.io/audio/berklee/clap_1.mp3" // Fallback to Berklee clap
     }
   },
   LINN: {
     name: "Digital (Linn)",
     samples: {
-      kick: "https://cdn.jsdelivr.net/gh/Tonejs/audio/drum-samples/LinnDrum/kick.mp3",
-      snare: "https://cdn.jsdelivr.net/gh/Tonejs/audio/drum-samples/LinnDrum/snare.mp3",
-      hihat: "https://cdn.jsdelivr.net/gh/Tonejs/audio/drum-samples/LinnDrum/hihat.mp3",
-      clap: "https://cdn.jsdelivr.net/gh/Tonejs/audio/drum-samples/LinnDrum/clap.mp3"
+      kick: "https://tonejs.github.io/audio/drum-samples/LinnDrum/kick.mp3",
+      snare: "https://tonejs.github.io/audio/drum-samples/LinnDrum/snare.mp3",
+      hihat: "https://tonejs.github.io/audio/drum-samples/LinnDrum/hihat.mp3",
+      clap: "https://tonejs.github.io/audio/berklee/clap_1.mp3" // Fallback to Berklee clap
     }
   }
 };
