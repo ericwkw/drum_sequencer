@@ -1,4 +1,3 @@
-
 import { Instrument, InstrumentType, GridPattern, DrumKit, Track } from './types';
 
 export const INSTRUMENTS: Instrument[] = [
@@ -29,12 +28,14 @@ const SAMPLES = {
     KPR77_SNARE: "https://tonejs.github.io/audio/drum-samples/KPR77/snare.mp3",
     KPR77_HIHAT: "https://tonejs.github.io/audio/drum-samples/KPR77/hihat.mp3",
     
-    // LinnDrum (Core sounds only)
-    LINN_KICK: "https://tonejs.github.io/audio/drum-samples/LinnDrum/kick.mp3",
-    LINN_SNARE: "https://tonejs.github.io/audio/drum-samples/LinnDrum/snare.mp3",
-    LINN_HIHAT: "https://tonejs.github.io/audio/drum-samples/LinnDrum/hihat.mp3",
-    
-    // Berklee (Reliable Clap)
+    // TR-808 (Digital/Analog Hybrid Standard - Reliable Core)
+    TR808_KICK: "https://tonejs.github.io/audio/drum-samples/TR-808/kick.mp3",
+    TR808_SNARE: "https://tonejs.github.io/audio/drum-samples/TR-808/snare.mp3",
+    TR808_HIHAT: "https://tonejs.github.io/audio/drum-samples/TR-808/closedhat.mp3",
+    TR808_OPENHAT: "https://tonejs.github.io/audio/drum-samples/TR-808/openhat.mp3",
+    TR808_CLAP: "https://tonejs.github.io/audio/drum-samples/TR-808/clap.mp3",
+
+    // Berklee (Reliable Clap Fallback)
     CLAP: "https://tonejs.github.io/audio/berklee/clap_1.mp3",
 };
 
@@ -67,15 +68,15 @@ export const KITS: Record<string, DrumKit> = {
       ride: SAMPLES.CR78_TOM1 // Fallback to CR78
     }
   },
-  LINN: {
-    name: "Digital (Linn)",
+  TR808: {
+    name: "Digital (808)",
     samples: {
-      kick: SAMPLES.LINN_KICK,
-      snare: SAMPLES.LINN_SNARE,
-      hihat: SAMPLES.LINN_HIHAT,
-      openhat: SAMPLES.LINN_HIHAT, // Reused (Safe)
-      clap: SAMPLES.CLAP,
-      tom_high: SAMPLES.CR78_TOM1, // Fallback to CR78
+      kick: SAMPLES.TR808_KICK,
+      snare: SAMPLES.TR808_SNARE,
+      hihat: SAMPLES.TR808_HIHAT,
+      openhat: SAMPLES.TR808_OPENHAT,
+      clap: SAMPLES.TR808_CLAP,
+      tom_high: SAMPLES.CR78_TOM1, // Fallback to CR78 (808 Toms often missing on host)
       tom_low: SAMPLES.CR78_TOM3, // Fallback to CR78
       crash: SAMPLES.CR78_TOM2, // Fallback to CR78
       ride: SAMPLES.CR78_TOM1 // Fallback to CR78

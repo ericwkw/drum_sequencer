@@ -10,7 +10,7 @@ Designed for musicians and producers, it runs entirely in the browser using the 
 
 ### 🎧 Pro Audio Engine
 - **9-Track Drum Kit**: Full sequencing for Kick, Snare, Hi-Hat, Open Hat, Clap, High Tom, Low Tom, Crash, and Ride.
-- **channel Mixer**: Individual **Volume** faders and **Pitch/Tuning** knobs (-12 to +12 semitones) for every track.
+- **Channel Mixer**: Individual **Volume** faders and **Pitch/Tuning** knobs (-12 to +12 semitones) for every track.
 - **Master Effects**:
   - **Reverb**: Convolution reverb with adjustable send level.
   - **Compressor**: Integrated master bus compression for punchy, loud mixes.
@@ -26,7 +26,7 @@ Designed for musicians and producers, it runs entirely in the browser using the 
 - **Vintage Kits**: Switch between legendary drum machine sounds:
   - **Classic (CR-78)**: The warmth of early analog rhythm boxes.
   - **Analog (KPR-77)**: Raw, metallic analog textures.
-  - **Digital (Linn)**: The punchy, sampled sound of the 80s.
+  - **Digital (TR-808)**: The industry-standard boom and snap of the 80s.
 
 ### 💾 Workflow & Persistence
 - **Auto-Save**: Your session (patterns, mixer settings, kit selection) is automatically saved to LocalStorage.
