@@ -1,3 +1,4 @@
+
 import { Instrument, InstrumentType, GridPattern, DrumKit, Track } from './types';
 
 export const INSTRUMENTS: Instrument[] = [
@@ -23,19 +24,28 @@ const SAMPLES = {
     CR78_TOM2: "https://tonejs.github.io/audio/drum-samples/CR78/tom2.mp3", // Mid
     CR78_TOM3: "https://tonejs.github.io/audio/drum-samples/CR78/tom3.mp3", // Low
     
-    // KPR77 (Core sounds only)
+    // KPR77 (Analog)
     KPR77_KICK: "https://tonejs.github.io/audio/drum-samples/KPR77/kick.mp3",
     KPR77_SNARE: "https://tonejs.github.io/audio/drum-samples/KPR77/snare.mp3",
     KPR77_HIHAT: "https://tonejs.github.io/audio/drum-samples/KPR77/hihat.mp3",
+    KPR77_OPENHAT: "https://tonejs.github.io/audio/drum-samples/KPR77/openhat.mp3",
+    KPR77_CLAP: "https://tonejs.github.io/audio/drum-samples/KPR77/clap.mp3",
+    KPR77_TOM1: "https://tonejs.github.io/audio/drum-samples/KPR77/tom1.mp3",
+    KPR77_TOM2: "https://tonejs.github.io/audio/drum-samples/KPR77/tom2.mp3",
+    KPR77_TOM3: "https://tonejs.github.io/audio/drum-samples/KPR77/tom3.mp3",
+    KPR77_CYMBAL: "https://tonejs.github.io/audio/drum-samples/KPR77/cymbal.mp3",
     
-    // TR-808 (Digital/Analog Hybrid Standard - Reliable Core)
+    // TR-808 (Digital/Analog Hybrid Standard)
     TR808_KICK: "https://tonejs.github.io/audio/drum-samples/TR-808/kick.mp3",
     TR808_SNARE: "https://tonejs.github.io/audio/drum-samples/TR-808/snare.mp3",
-    TR808_HIHAT: "https://tonejs.github.io/audio/drum-samples/TR-808/closedhat.mp3",
+    TR808_HIHAT: "https://tonejs.github.io/audio/drum-samples/TR-808/hihat.mp3", // Corrected filename
     TR808_OPENHAT: "https://tonejs.github.io/audio/drum-samples/TR-808/openhat.mp3",
     TR808_CLAP: "https://tonejs.github.io/audio/drum-samples/TR-808/clap.mp3",
+    TR808_TOM1: "https://tonejs.github.io/audio/drum-samples/TR-808/tom1.mp3",
+    TR808_TOM2: "https://tonejs.github.io/audio/drum-samples/TR-808/tom2.mp3",
+    TR808_TOM3: "https://tonejs.github.io/audio/drum-samples/TR-808/tom3.mp3",
 
-    // Berklee (Reliable Clap Fallback)
+    // Berklee (Reliable Fallbacks)
     CLAP: "https://tonejs.github.io/audio/berklee/clap_1.mp3",
 };
 
@@ -60,12 +70,12 @@ export const KITS: Record<string, DrumKit> = {
       kick: SAMPLES.KPR77_KICK,
       snare: SAMPLES.KPR77_SNARE,
       hihat: SAMPLES.KPR77_HIHAT,
-      openhat: SAMPLES.KPR77_HIHAT, // Reused (Safe)
-      clap: SAMPLES.CLAP,
-      tom_high: SAMPLES.CR78_TOM1, // Fallback to CR78
-      tom_low: SAMPLES.CR78_TOM3, // Fallback to CR78
-      crash: SAMPLES.CR78_TOM2, // Fallback to CR78
-      ride: SAMPLES.CR78_TOM1 // Fallback to CR78
+      openhat: SAMPLES.KPR77_OPENHAT,
+      clap: SAMPLES.KPR77_CLAP,
+      tom_high: SAMPLES.KPR77_TOM1,
+      tom_low: SAMPLES.KPR77_TOM3, 
+      crash: SAMPLES.KPR77_CYMBAL,
+      ride: SAMPLES.KPR77_CYMBAL // Reused
     }
   },
   TR808: {
@@ -76,10 +86,10 @@ export const KITS: Record<string, DrumKit> = {
       hihat: SAMPLES.TR808_HIHAT,
       openhat: SAMPLES.TR808_OPENHAT,
       clap: SAMPLES.TR808_CLAP,
-      tom_high: SAMPLES.CR78_TOM1, // Fallback to CR78 (808 Toms often missing on host)
-      tom_low: SAMPLES.CR78_TOM3, // Fallback to CR78
-      crash: SAMPLES.CR78_TOM2, // Fallback to CR78
-      ride: SAMPLES.CR78_TOM1 // Fallback to CR78
+      tom_high: SAMPLES.TR808_TOM1,
+      tom_low: SAMPLES.TR808_TOM3,
+      crash: SAMPLES.KPR77_CYMBAL, // Fallback (808 kit usually lacks dedicated crash in this repo)
+      ride: SAMPLES.TR808_TOM2     // Fallback (Cowbell/Tom hybrid feel)
     }
   }
 };
