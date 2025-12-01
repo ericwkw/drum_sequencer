@@ -1,40 +1,44 @@
 # BeatMe 🥁✨
 
-**BeatMe** is a next-generation web-based drum sequencer that fuses classic groovebox workflows with the power of Generative AI. 
+**BeatMe** is a professional-grade web drum sequencer that fuses classic groovebox workflows with the power of Generative AI. 
 
-Compose beats manually using a professional step sequencer, or simply describe a vibe (e.g., *"Lo-fi hip hop beat with heavy swing"* or *"Fast-paced Berlin techno"*) and watch Google's Gemini AI dream up the pattern for you.
+Designed for musicians and producers, it runs entirely in the browser using the Web Audio API. You can compose beats manually using the step sequencer, or describe a vibe (e.g., *"Lo-fi hip hop beat with heavy swing"* or *"Fast-paced Berlin techno"*) and watch **Google Gemini** dream up the pattern for you.
 
-![BeatMe Interface](https://via.placeholder.com/1200x600/111827/38bdf8?text=BeatMe+Interface+Screenshot)
+![BeatMe Interface](https://via.placeholder.com/1200x600/111827/38bdf8?text=BeatMe+Sequencer+Screenshot)
 
 ## 🚀 Key Features
 
-### 🧠 AI-Powered Composition
-- **Text-to-Beat**: Powered by **Google Gemini 2.5 Flash**. Just type a prompt, and the AI generates a multi-track pattern instantly.
-- **Context Aware**: The AI understands musical genres, tempo, and instrument roles.
+### 🎧 Pro Audio Engine
+- **9-Track Drum Kit**: Full sequencing for Kick, Snare, Hi-Hat, Open Hat, Clap, High Tom, Low Tom, Crash, and Ride.
+- **channel Mixer**: Individual **Volume** faders and **Pitch/Tuning** knobs (-12 to +12 semitones) for every track.
+- **Master Effects**:
+  - **Reverb**: Convolution reverb with adjustable send level.
+  - **Compressor**: Integrated master bus compression for punchy, loud mixes.
+  - **Swing**: Global MPC-style swing parameter to humanize your rhythms.
 
-### 🎛️ Professional Audio Engine
-- **Sample-Accurate Timing**: Built on the native Web Audio API for precise playback.
-- **Sonic Control**: Per-track **Volume**, **Mute**, and **Pitch Tuning** (-12/+12 semitones).
-- **Groove & Effects**: Global **Swing** (MPC-style) and Master **Reverb**.
-- **Dynamics**: Integrated Master Compressor/Limiter to keep your beats loud and punchy without clipping.
+### 🧠 AI Composer
+- **Text-to-Beat**: Powered by **Google Gemini 2.5 Flash**. Just type a prompt, and the AI generates a full multi-track pattern instantly.
+- **Smart Mapping**: The AI understands specific instrument roles (e.g., syncing open hats with kicks) and genre-specific tempos.
 
 ### 🎹 Advanced Sequencing
-- **Pattern Banking**: Switch instantly between 4 unique patterns (A, B, C, D) to build verses, choruses, and breakdowns.
-- **Polyrhythms & Odd Meters**: Support for custom time signatures (3/4, 5/4, 7/8) and step counts (4 to 64 steps).
-- **Dynamic Tracks**: Add or remove instruments (Kick, Snare, Hats, Toms, Cymbals) to build your custom kit.
-- **Multiple Kits**: Switch between classic drum machines (CR78, KPR77, LinnDrum, Roland R8).
+- **Pattern Banking**: 4 distinct banks (**A, B, C, D**) per project. Create variations for Verses, Choruses, and Drops and switch instantly.
+- **Polyrhythms & Odd Meters**: Support for custom time signatures (3/4, 5/4, 7/8) and adjustable step counts (4 to 64 steps).
+- **Vintage Kits**: Switch between legendary drum machine sounds:
+  - **Classic (CR-78)**: The warmth of early analog rhythm boxes.
+  - **Analog (KPR-77)**: Raw, metallic analog textures.
+  - **Digital (Linn)**: The punchy, sampled sound of the 80s.
 
-### 💾 Persistence
-- **Auto-Save**: Your session is automatically saved to your browser's LocalStorage.
-- **Export/Import**: Download your projects as `.json` files to share or backup.
-- **Privacy First**: All audio processing happens in the browser. No personal data is stored on any server.
+### 💾 Workflow & Persistence
+- **Auto-Save**: Your session (patterns, mixer settings, kit selection) is automatically saved to LocalStorage.
+- **Project Management**: Name your projects and **Export/Import** them as JSON files to share or backup.
+- **Privacy First**: All audio processing happens client-side. No user data is stored on our servers.
 
 ## 🛠️ Tech Stack
 
 - **Frontend**: React 18, TypeScript, Vite
 - **Styling**: Tailwind CSS
 - **AI**: Google GenAI SDK (`@google/genai`)
-- **Audio**: Native Web Audio API (AudioContext, GainNode, ConvolverNode)
+- **Audio**: Native Web Audio API (`AudioContext`, `GainNode`, `ConvolverNode`)
 
 ## 📦 Getting Started
 
@@ -56,42 +60,32 @@ Compose beats manually using a professional step sequencer, or simply describe a
    ```
 
 3. **Configure Environment**
-   Create a `.env` file in the root directory (if using Vite/local setup) or configure your Vercel Environment Variables:
+   Create a `.env` file in the root directory (or configure Vercel environment variables):
    ```env
    # Get your key at https://aistudio.google.com/
    API_KEY=your_google_gemini_api_key_here
    ```
-   *Note: In the provided source code structure, ensure your bundler injects `process.env.API_KEY`.*
 
 4. **Run Local Server**
    ```bash
    npm run start
-   # or
-   npm run dev
    ```
 
-## 🎮 Usage Guide
+## 🎮 Quick Guide
 
-1. **Manual Sequencing**: Click the grid pads to toggle steps. Use the **Volume** and **Tune** sliders on the left to mix your kit.
-2. **AI Generation**: Type a prompt in the bottom bar (e.g., *"House beat with syncopated hats"*) and click **Dream**.
-3. **Banking**: Use the **A / B / C / D** buttons to switch variations. Use the dropdown to **Copy** the current bank to another slot.
-4. **Swing**: Adjust the **Swing** slider to push even-numbered 16th notes off-grid for a "human" feel.
-5. **Saving**: Click **Export** to save your project file. Click the **Trash** icon to factory reset the app.
+1. **The Grid**: Click the pads to toggle steps. Use **Shift + Click** to clear an entire row.
+2. **The Mixer**: 
+   - Drag the **Slider** to adjust volume.
+   - Drag the **Tune** knob (purple) to pitch samples up or down.
+   - Click **M** to mute a track.
+3. **AI Generation**: Type a prompt in the bottom bar (e.g., *"Syncopated house beat"*) and click **Dream**.
+4. **Arrangement**: Use the **A / B / C / D** buttons to switch pattern banks. Use the dropdown to **Copy** the current bank to a new slot.
+5. **Saving**: Click **Export** to save your project file.
 
 ## 🤝 Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
-1. Fork the project
-2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the Branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
 ## 📄 License
 
-Distributed under the MIT License. See `LICENSE` for more information.
-
----
-
-*Built with ❤️ using React and Google Gemini.*
+Distributed under the MIT License.
