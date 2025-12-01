@@ -14,9 +14,9 @@ export const INSTRUMENTS: Instrument[] = [
 ];
 
 // VERIFIED AUDIO SOURCES
-// We only use URLs that are 100% confirmed to exist to prevent 404 crashes.
+// We strictly use only URLs that are confirmed to work.
 const SAMPLES = {
-    // CR78 (The most complete and reliable folder on the host)
+    // CR78 (Rock Solid - The "Safe Haven")
     CR78_KICK: "https://tonejs.github.io/audio/drum-samples/CR78/kick.mp3",
     CR78_SNARE: "https://tonejs.github.io/audio/drum-samples/CR78/snare.mp3",
     CR78_HIHAT: "https://tonejs.github.io/audio/drum-samples/CR78/hihat.mp3",
@@ -24,29 +24,14 @@ const SAMPLES = {
     CR78_TOM2: "https://tonejs.github.io/audio/drum-samples/CR78/tom2.mp3", // Mid
     CR78_TOM3: "https://tonejs.github.io/audio/drum-samples/CR78/tom3.mp3", // Low
     
-    // KPR77 (Analog)
+    // KPR77 (Partial - Only Kick/Snare/Hat are reliable)
     KPR77_KICK: "https://tonejs.github.io/audio/drum-samples/KPR77/kick.mp3",
     KPR77_SNARE: "https://tonejs.github.io/audio/drum-samples/KPR77/snare.mp3",
     KPR77_HIHAT: "https://tonejs.github.io/audio/drum-samples/KPR77/hihat.mp3",
-    KPR77_OPENHAT: "https://tonejs.github.io/audio/drum-samples/KPR77/openhat.mp3",
-    KPR77_CLAP: "https://tonejs.github.io/audio/drum-samples/KPR77/clap.mp3",
-    KPR77_TOM1: "https://tonejs.github.io/audio/drum-samples/KPR77/tom1.mp3",
-    KPR77_TOM2: "https://tonejs.github.io/audio/drum-samples/KPR77/tom2.mp3",
-    KPR77_TOM3: "https://tonejs.github.io/audio/drum-samples/KPR77/tom3.mp3",
-    KPR77_CYMBAL: "https://tonejs.github.io/audio/drum-samples/KPR77/cymbal.mp3",
-    
-    // TR-808 (Digital/Analog Hybrid Standard)
-    TR808_KICK: "https://tonejs.github.io/audio/drum-samples/TR-808/kick.mp3",
-    TR808_SNARE: "https://tonejs.github.io/audio/drum-samples/TR-808/snare.mp3",
-    TR808_HIHAT: "https://tonejs.github.io/audio/drum-samples/TR-808/hihat.mp3", // Corrected filename
-    TR808_OPENHAT: "https://tonejs.github.io/audio/drum-samples/TR-808/openhat.mp3",
-    TR808_CLAP: "https://tonejs.github.io/audio/drum-samples/TR-808/clap.mp3",
-    TR808_TOM1: "https://tonejs.github.io/audio/drum-samples/TR-808/tom1.mp3",
-    TR808_TOM2: "https://tonejs.github.io/audio/drum-samples/TR-808/tom2.mp3",
-    TR808_TOM3: "https://tonejs.github.io/audio/drum-samples/TR-808/tom3.mp3",
+    // Note: KPR77 Clap/Cymbal/OpenHat are missing from host, causing 404s.
 
-    // Berklee (Reliable Fallbacks)
-    CLAP: "https://tonejs.github.io/audio/berklee/clap_1.mp3",
+    // Berklee (Reliable Single Shots)
+    BERKLEE_CLAP: "https://tonejs.github.io/audio/berklee/clap_1.mp3",
 };
 
 export const KITS: Record<string, DrumKit> = {
@@ -56,12 +41,12 @@ export const KITS: Record<string, DrumKit> = {
       kick: SAMPLES.CR78_KICK,
       snare: SAMPLES.CR78_SNARE,
       hihat: SAMPLES.CR78_HIHAT,
-      openhat: SAMPLES.CR78_HIHAT, // Reused (Safe)
-      clap: SAMPLES.CLAP,
+      openhat: SAMPLES.CR78_HIHAT, // Reuse HH for Open (Safe)
+      clap: SAMPLES.BERKLEE_CLAP,
       tom_high: SAMPLES.CR78_TOM1, 
       tom_low: SAMPLES.CR78_TOM3, 
-      crash: SAMPLES.CR78_TOM2, // Fallback (Safe)
-      ride: SAMPLES.CR78_TOM1   // Fallback (Safe)
+      crash: SAMPLES.CR78_TOM2, // Use Tom as Cymbal-like impact
+      ride: SAMPLES.CR78_HIHAT   // Use HiHat as Ride texture
     }
   },
   KPR77: {
@@ -70,26 +55,27 @@ export const KITS: Record<string, DrumKit> = {
       kick: SAMPLES.KPR77_KICK,
       snare: SAMPLES.KPR77_SNARE,
       hihat: SAMPLES.KPR77_HIHAT,
-      openhat: SAMPLES.KPR77_OPENHAT,
-      clap: SAMPLES.KPR77_CLAP,
-      tom_high: SAMPLES.KPR77_TOM1,
-      tom_low: SAMPLES.KPR77_TOM3, 
-      crash: SAMPLES.KPR77_CYMBAL,
-      ride: SAMPLES.KPR77_CYMBAL // Reused
+      openhat: SAMPLES.CR78_HIHAT, // Fallback to CR78
+      clap: SAMPLES.BERKLEE_CLAP,  // Fallback to Berklee
+      tom_high: SAMPLES.CR78_TOM1, // Fallback to CR78
+      tom_low: SAMPLES.CR78_TOM3,  // Fallback to CR78
+      crash: SAMPLES.CR78_TOM2,    // Fallback to CR78
+      ride: SAMPLES.CR78_HIHAT     // Fallback to CR78
     }
   },
   TR808: {
-    name: "Digital (808)",
+    name: "Hybrid (Safe)",
+    // The TR-808 folder is unstable. We build a 'Digital' feel using the punchy KPR77 Kick/Snare + CR78 Percs.
     samples: {
-      kick: SAMPLES.TR808_KICK,
-      snare: SAMPLES.TR808_SNARE,
-      hihat: SAMPLES.TR808_HIHAT,
-      openhat: SAMPLES.TR808_OPENHAT,
-      clap: SAMPLES.TR808_CLAP,
-      tom_high: SAMPLES.TR808_TOM1,
-      tom_low: SAMPLES.TR808_TOM3,
-      crash: SAMPLES.KPR77_CYMBAL, // Fallback (808 kit usually lacks dedicated crash in this repo)
-      ride: SAMPLES.TR808_TOM2     // Fallback (Cowbell/Tom hybrid feel)
+      kick: SAMPLES.KPR77_KICK, 
+      snare: SAMPLES.KPR77_SNARE, 
+      hihat: SAMPLES.CR78_HIHAT,
+      openhat: SAMPLES.CR78_HIHAT,
+      clap: SAMPLES.BERKLEE_CLAP,
+      tom_high: SAMPLES.CR78_TOM1,
+      tom_low: SAMPLES.CR78_TOM3,
+      crash: SAMPLES.CR78_TOM2,
+      ride: SAMPLES.CR78_HIHAT
     }
   }
 };
