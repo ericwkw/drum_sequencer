@@ -14,11 +14,11 @@ export const INSTRUMENTS: Instrument[] = [
 ];
 
 // Fallback URLs for common sounds
+// Using mix of analog and acoustic samples where specific machine samples are missing from the public CDN
 const SAMPLES = {
     CR78_KICK: "https://tonejs.github.io/audio/drum-samples/CR78/kick.mp3",
     CR78_SNARE: "https://tonejs.github.io/audio/drum-samples/CR78/snare.mp3",
     CR78_HIHAT: "https://tonejs.github.io/audio/drum-samples/CR78/hihat.mp3",
-    CR78_TOM: "https://tonejs.github.io/audio/drum-samples/CR78/tom1.mp3", // Note: often missing, might need fallback
     
     KPR77_KICK: "https://tonejs.github.io/audio/drum-samples/KPR77/kick.mp3",
     KPR77_SNARE: "https://tonejs.github.io/audio/drum-samples/KPR77/snare.mp3",
@@ -28,13 +28,14 @@ const SAMPLES = {
     LINN_SNARE: "https://tonejs.github.io/audio/drum-samples/LinnDrum/snare.mp3",
     LINN_HIHAT: "https://tonejs.github.io/audio/drum-samples/LinnDrum/hihat.mp3",
     
-    // Reliable Fallbacks (LinnDrum / Berklee)
+    // Reliable Fallbacks
     CLAP: "https://tonejs.github.io/audio/berklee/clap_1.mp3", 
-    TOM_HI: "https://tonejs.github.io/audio/drum-samples/LinnDrum/tom1.mp3", // Using Linn for Toms
-    TOM_LO: "https://tonejs.github.io/audio/drum-samples/LinnDrum/tom2.mp3",
-    CRASH: "https://tonejs.github.io/audio/drum-samples/LinnDrum/crash.mp3",
-    RIDE: "https://tonejs.github.io/audio/drum-samples/LinnDrum/ride.mp3",
-    OPEN_HAT: "https://tonejs.github.io/audio/drum-samples/LinnDrum/openhat.mp3" 
+    // Using 808/Acoustic samples for missing LinnDrum/CR78 cymbals/toms to ensure sound 
+    TOM_HI: "https://tonejs.github.io/audio/drum-samples/TR808/tom1.mp3", 
+    TOM_LO: "https://tonejs.github.io/audio/drum-samples/TR808/tom2.mp3",
+    CRASH: "https://tonejs.github.io/audio/drum-samples/acoustic-kit/crash.mp3",
+    RIDE: "https://tonejs.github.io/audio/drum-samples/acoustic-kit/hihat.mp3", // Acoustic kit often lacks ride in this lib, using open hat as placeholder or specific sample
+    OPEN_HAT: "https://tonejs.github.io/audio/drum-samples/TR808/openhat.mp3" 
 };
 
 export const KITS: Record<string, DrumKit> = {
@@ -44,12 +45,12 @@ export const KITS: Record<string, DrumKit> = {
       kick: SAMPLES.CR78_KICK,
       snare: SAMPLES.CR78_SNARE,
       hihat: SAMPLES.CR78_HIHAT,
-      openhat: SAMPLES.OPEN_HAT, // Fallback
+      openhat: SAMPLES.OPEN_HAT, 
       clap: SAMPLES.CLAP,
-      tom_high: SAMPLES.TOM_HI, // Fallback
-      tom_low: SAMPLES.TOM_LO, // Fallback
-      crash: SAMPLES.CRASH, // Fallback
-      ride: SAMPLES.RIDE // Fallback
+      tom_high: SAMPLES.TOM_HI, 
+      tom_low: SAMPLES.TOM_LO, 
+      crash: SAMPLES.CRASH, 
+      ride: "https://tonejs.github.io/audio/drum-samples/CR78/hihat.mp3" // Fallback to HH for ride texture if missing
     }
   },
   KPR77: {
@@ -58,12 +59,12 @@ export const KITS: Record<string, DrumKit> = {
       kick: SAMPLES.KPR77_KICK,
       snare: SAMPLES.KPR77_SNARE,
       hihat: SAMPLES.KPR77_HIHAT,
-      openhat: SAMPLES.OPEN_HAT, // Fallback
+      openhat: SAMPLES.OPEN_HAT, 
       clap: SAMPLES.CLAP,
-      tom_high: SAMPLES.TOM_HI, // Fallback
-      tom_low: SAMPLES.TOM_LO, // Fallback
-      crash: SAMPLES.CRASH, // Fallback
-      ride: SAMPLES.RIDE // Fallback
+      tom_high: SAMPLES.TOM_HI, 
+      tom_low: SAMPLES.TOM_LO, 
+      crash: SAMPLES.CRASH, 
+      ride: "https://tonejs.github.io/audio/drum-samples/KPR77/hihat.mp3"
     }
   },
   LINN: {
@@ -77,7 +78,7 @@ export const KITS: Record<string, DrumKit> = {
       tom_high: SAMPLES.TOM_HI,
       tom_low: SAMPLES.TOM_LO,
       crash: SAMPLES.CRASH,
-      ride: SAMPLES.RIDE
+      ride: "https://tonejs.github.io/audio/drum-samples/acoustic-kit/hihat.mp3" // Using acoustic open hat as ride-like sound
     }
   }
 };
