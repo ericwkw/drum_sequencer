@@ -36,9 +36,9 @@ const SequencerGrid: React.FC<SequencerGridProps> = ({
           {/* Timeline Ruler */}
           <div className="flex gap-4 items-end mb-1">
             {/* Header Spacer for controls */}
-            <div className="w-48 shrink-0 text-right text-xs text-gray-500 font-mono pb-1 uppercase tracking-wider flex justify-end gap-2 pr-2">
-               <span>Mixer</span>
-               <span>Track</span>
+            <div className="w-64 shrink-0 flex justify-between px-2 text-xs text-gray-500 font-mono pb-1 uppercase tracking-wider">
+               <span className="pl-8">Mixer</span>
+               <span className="text-right">Track</span>
             </div>
             
             <div className="flex-1 grid gap-1" style={gridStyle}>
@@ -65,36 +65,38 @@ const SequencerGrid: React.FC<SequencerGridProps> = ({
           {tracks.map((track, rowIndex) => (
             <div key={track.id} className="flex items-center gap-4 group/row">
               {/* Instrument Controls */}
-              <div className="w-48 shrink-0 flex items-center justify-end gap-3 bg-gray-900/50 p-1 rounded border border-transparent hover:border-gray-800 transition-colors">
+              <div className="w-64 shrink-0 flex items-center justify-between gap-3 bg-gray-900/50 p-2 rounded border border-transparent hover:border-gray-800 transition-colors">
                 
-                {/* Delete */}
-                <button 
-                    onClick={() => onRemoveTrack(rowIndex)}
-                    className="opacity-0 group-hover/row:opacity-100 text-gray-600 hover:text-red-500 transition-opacity p-1"
-                    title="Remove Track"
-                    disabled={tracks.length <= 1}
-                >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                    </svg>
-                </button>
+                <div className="flex items-center gap-2 shrink-0">
+                    {/* Delete */}
+                    <button 
+                        onClick={() => onRemoveTrack(rowIndex)}
+                        className="w-5 h-5 flex items-center justify-center opacity-0 group-hover/row:opacity-100 text-gray-600 hover:text-red-500 transition-opacity"
+                        title="Remove Track"
+                        disabled={tracks.length <= 1}
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                        </svg>
+                    </button>
 
-                {/* Mute */}
-                <button
-                    onClick={() => onTrackChange(rowIndex, { muted: !track.muted })}
-                    className={`
-                        w-6 h-6 rounded flex items-center justify-center text-[10px] font-bold border
-                        ${track.muted 
-                           ? 'bg-red-900/50 border-red-800 text-red-400' 
-                           : 'bg-gray-800 border-gray-700 text-gray-400 hover:text-white'}
-                    `}
-                    title="Mute"
-                >
-                    M
-                </button>
+                    {/* Mute */}
+                    <button
+                        onClick={() => onTrackChange(rowIndex, { muted: !track.muted })}
+                        className={`
+                            w-6 h-6 shrink-0 rounded flex items-center justify-center text-[10px] font-bold border transition-colors
+                            ${track.muted 
+                            ? 'bg-red-900/50 border-red-800 text-red-400' 
+                            : 'bg-gray-800 border-gray-700 text-gray-400 hover:text-white'}
+                        `}
+                        title="Mute"
+                    >
+                        M
+                    </button>
+                </div>
 
                 {/* Volume */}
-                <div className="flex flex-col w-16 group/vol">
+                <div className="flex-1 px-1 group/vol flex items-center">
                     <input 
                         type="range" 
                         min="0" 
@@ -102,14 +104,14 @@ const SequencerGrid: React.FC<SequencerGridProps> = ({
                         step="0.05"
                         value={track.volume}
                         onChange={(e) => onTrackChange(rowIndex, { volume: parseFloat(e.target.value) })}
-                        className="h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-cyan-500"
+                        className="w-full h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-cyan-500 hover:accent-cyan-400"
                         title={`Volume: ${Math.round(track.volume * 100)}%`}
                     />
                 </div>
 
                 {/* Name */}
-                <div className="w-16 text-right relative">
-                    <span className={`text-sm font-bold tracking-wider uppercase transition-colors ${isLoaded ? 'text-gray-300' : 'text-gray-600'} ${track.muted ? 'line-through opacity-50' : ''}`}>
+                <div className="w-20 text-right relative shrink-0">
+                    <span className={`text-sm font-bold tracking-wider uppercase transition-colors truncate block ${isLoaded ? 'text-gray-300' : 'text-gray-600'} ${track.muted ? 'line-through opacity-50' : ''}`}>
                     {track.name}
                     </span>
                     <div className={`h-[2px] w-full mt-1 opacity-50 ${track.color.replace('bg-', 'bg-gradient-to-r from-transparent to-')}`}></div>
