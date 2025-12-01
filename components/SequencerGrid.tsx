@@ -36,12 +36,19 @@ const SequencerGrid: React.FC<SequencerGridProps> = ({
         {/* min-w-max ensures the container grows to fit the full width of headers + grid steps, triggering scroll instead of squash */}
         <div className="flex flex-col gap-2 min-w-max">
           
-          {/* Timeline Ruler */}
+          {/* Timeline Ruler & Header */}
           <div className="flex gap-4 items-end mb-1">
-            {/* Header Spacer for controls */}
-            <div className="w-64 shrink-0 flex justify-between px-2 text-xs text-gray-500 font-mono pb-1 uppercase tracking-wider">
-               <span className="pl-8">Mixer</span>
-               <span className="text-right">Track</span>
+            {/* Header Spacer for controls - Perfectly aligned with Track Row columns */}
+            {/* Expanded width to w-72 to fit Name + Mixer comfortably */}
+            <div className="w-72 shrink-0 flex gap-2 px-2 pb-1 text-[10px] text-gray-500 font-bold uppercase tracking-wider items-end">
+               {/* Spacer matching Mute/Delete button group width */}
+               <div className="w-[48px] shrink-0"></div> 
+               
+               {/* Track Name Header */}
+               <div className="w-20 text-left pl-1">Track</div>
+
+               {/* Mixer Header */}
+               <div className="flex-1 text-center">Mixer (Vol / Tune)</div>
             </div>
             
             <div className="flex-1 grid gap-1" style={gridStyle}>
@@ -67,10 +74,11 @@ const SequencerGrid: React.FC<SequencerGridProps> = ({
           {/* Track Rows */}
           {tracks.map((track, rowIndex) => (
             <div key={track.id} className="flex items-center gap-4 group/row">
-              {/* Instrument Controls */}
-              <div className="w-64 shrink-0 flex items-center justify-between gap-2 bg-gray-900/50 p-2 rounded border border-transparent hover:border-gray-800 transition-colors">
+              {/* Instrument Controls Sidebar */}
+              <div className="w-72 shrink-0 flex items-center gap-2 bg-gray-900/50 p-2 rounded border border-transparent hover:border-gray-800 transition-colors">
                 
-                <div className="flex items-center gap-1 shrink-0">
+                {/* 1. Buttons (Delete / Mute) */}
+                <div className="flex items-center gap-1 shrink-0 w-[48px]">
                     {/* Delete */}
                     <button 
                         onClick={() => onRemoveTrack(rowIndex)}
@@ -98,22 +106,34 @@ const SequencerGrid: React.FC<SequencerGridProps> = ({
                     </button>
                 </div>
 
-                {/* Mixer: Volume & Pitch */}
-                <div className="flex-1 flex flex-col gap-1 px-1">
+                {/* 2. Track Name (Moved to Left for readability) */}
+                <div className="w-20 shrink-0 overflow-hidden pl-1">
+                    <span className={`text-xs font-bold tracking-wide uppercase transition-colors truncate block ${isLoaded ? 'text-white' : 'text-gray-600'} ${track.muted ? 'line-through opacity-50' : ''}`} title={track.name}>
+                    {track.name}
+                    </span>
+                    <div className={`h-[2px] w-full mt-1 opacity-50 ${track.color.replace('bg-', 'bg-gradient-to-r from-transparent to-')}`}></div>
+                </div>
+
+                {/* 3. Mixer: Volume & Pitch */}
+                <div className="flex-1 flex flex-col gap-1 px-1 border-l border-gray-800/50 ml-1">
                     {/* Volume */}
-                    <input 
-                        type="range" 
-                        min="0" 
-                        max="1" 
-                        step="0.05"
-                        value={track.volume}
-                        onChange={(e) => onTrackChange(rowIndex, { volume: parseFloat(e.target.value) })}
-                        className="w-full h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-cyan-500 hover:accent-cyan-400"
-                        title={`Volume: ${Math.round(track.volume * 100)}%`}
-                    />
+                    <div className="flex items-center gap-1 h-3">
+                        <input 
+                            type="range" 
+                            min="0" 
+                            max="1" 
+                            step="0.05"
+                            value={track.volume}
+                            onChange={(e) => onTrackChange(rowIndex, { volume: parseFloat(e.target.value) })}
+                            className="flex-1 h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-cyan-500 hover:accent-cyan-400"
+                            title={`Volume: ${Math.round(track.volume * 100)}%`}
+                        />
+                        {/* Spacer matches pitch value width */}
+                        <div className="w-3"></div>
+                    </div>
                     
                     {/* Tune (Pitch) */}
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1 h-3">
                          <input 
                             type="range" 
                             min="-12" 
@@ -124,19 +144,12 @@ const SequencerGrid: React.FC<SequencerGridProps> = ({
                             className="flex-1 h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-purple-500 hover:accent-purple-400"
                             title={`Tune: ${track.pitch || 0} st`}
                          />
-                         <span className="text-[8px] font-mono text-gray-500 w-3 text-right">
+                         <span className="text-[8px] font-mono text-gray-500 w-3 text-right leading-none">
                              {track.pitch || 0}
                          </span>
                     </div>
                 </div>
 
-                {/* Name */}
-                <div className="w-16 text-right relative shrink-0 overflow-hidden">
-                    <span className={`text-sm font-bold tracking-wider uppercase transition-colors truncate block ${isLoaded ? 'text-gray-300' : 'text-gray-600'} ${track.muted ? 'line-through opacity-50' : ''}`}>
-                    {track.name}
-                    </span>
-                    <div className={`h-[2px] w-full mt-1 opacity-50 ${track.color.replace('bg-', 'bg-gradient-to-r from-transparent to-')}`}></div>
-                </div>
               </div>
 
               {/* Steps Grid */}
