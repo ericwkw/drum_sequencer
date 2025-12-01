@@ -27,7 +27,7 @@ const SAMPLES = {
     KPR77_KICK: "https://tonejs.github.io/audio/drum-samples/KPR77/kick.mp3",
     KPR77_SNARE: "https://tonejs.github.io/audio/drum-samples/KPR77/snare.mp3",
     KPR77_HIHAT: "https://tonejs.github.io/audio/drum-samples/KPR77/hihat.mp3",
-    KPR77_COWBELL: "https://tonejs.github.io/audio/drum-samples/KPR77/cowbell.mp3",
+    // Cowbell removed due to 404
     
     // LinnDrum
     LINN_KICK: "https://tonejs.github.io/audio/drum-samples/LinnDrum/kick.mp3",
@@ -49,8 +49,8 @@ export const KITS: Record<string, DrumKit> = {
       clap: SAMPLES.CLAP,
       tom_high: SAMPLES.CR78_TOM1, 
       tom_low: SAMPLES.CR78_TOM2, 
-      crash: SAMPLES.CR78_HIHAT, // Fallback to prevent 404
-      ride: SAMPLES.KPR77_COWBELL // Uses Cowbell as Ride substitute
+      crash: SAMPLES.CR78_HIHAT, // Fallback
+      ride: SAMPLES.CR78_HIHAT // Fallback (Safe)
     }
   },
   KPR77: {
@@ -64,7 +64,7 @@ export const KITS: Record<string, DrumKit> = {
       tom_high: SAMPLES.CR78_TOM1, // Fallback to CR78
       tom_low: SAMPLES.CR78_TOM2, // Fallback to CR78
       crash: SAMPLES.KPR77_HIHAT, // Fallback
-      ride: SAMPLES.KPR77_COWBELL
+      ride: SAMPLES.CR78_HIHAT // Fallback (Safe)
     }
   },
   LINN: {
@@ -78,7 +78,7 @@ export const KITS: Record<string, DrumKit> = {
       tom_high: SAMPLES.CR78_TOM1, // Fallback
       tom_low: SAMPLES.CR78_TOM2, // Fallback
       crash: SAMPLES.LINN_HIHAT, // Fallback
-      ride: SAMPLES.KPR77_COWBELL
+      ride: SAMPLES.CR78_HIHAT // Fallback (Safe)
     }
   }
 };
