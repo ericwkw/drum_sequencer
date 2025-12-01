@@ -4,16 +4,32 @@ export interface Instrument {
   id: InstrumentType;
   name: string;
   color: string;
-  sampleUrl: string;
+}
+
+export interface Track {
+  id: string; 
+  instrumentId: InstrumentType;
+  name: string;
+  color: string;
+  volume: number; // 0.0 to 1.0
+  muted: boolean;
+}
+
+export interface DrumKit {
+  name: string;
+  samples: Record<InstrumentType, string>;
 }
 
 export type GridPattern = boolean[][];
 
 export interface PatternData {
-  id: string;
-  name: string;
+  version: number;
   bpm: number;
-  grid: GridPattern;
+  steps: number;
+  currentKit: string;
+  tracks: Track[];
+  grids: GridPattern[]; // Array of grids (banks)
+  activeBankIndex: number;
 }
 
 export interface AudioContextState {

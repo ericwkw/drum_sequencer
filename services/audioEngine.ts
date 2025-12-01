@@ -1,63 +1,129 @@
-import { InstrumentType, Instrument } from '../types';
+import { DrumKit, Track } from '../types';
 
 export class AudioEngine {
   private context: AudioContext | null = null;
   private buffers: Record<string, AudioBuffer> = {};
+  
+  // Graph Nodes
+  private masterGain: GainNode | null = null;
+  private compressor: DynamicsCompressorNode | null = null;
+  private reverbNode: ConvolverNode | null = null;
+  private reverbGain: GainNode | null = null;
+
+  // Timing
   private nextNoteTime: number = 0;
   private timerID: number | null = null;
-  private lookahead: number = 25.0; // How frequently to call scheduling (ms)
-  private scheduleAheadTime: number = 0.1; // How far ahead to schedule audio (sec)
+  private lookahead: number = 25.0; 
+  private scheduleAheadTime: number = 0.1;
   
-  // Callback to update UI current step
+  // State
   private onStepPlay: (step: number) => void;
   private currentStep: number = 0;
   private isPlaying: boolean = false;
   private bpm: number = 120;
   private steps: number = 16;
+  
   private activeGrid: boolean[][] = [];
+  private activeTracks: Track[] = [];
 
   constructor(onStepPlay: (step: number) => void) {
     this.onStepPlay = onStepPlay;
   }
 
-  public async initialize(instruments: Instrument[]) {
+  public async initialize() {
     if (!this.context) {
       this.context = new (window.AudioContext || (window as any).webkitAudioContext)();
+      
+      // Master Bus: Compressor -> Master Gain -> Destination
+      this.compressor = this.context.createDynamicsCompressor();
+      this.compressor.threshold.value = -10;
+      this.compressor.knee.value = 10;
+      this.compressor.ratio.value = 12;
+      this.compressor.attack.value = 0;
+      this.compressor.release.value = 0.25;
+
+      this.masterGain = this.context.createGain();
+      this.masterGain.gain.value = 1.0;
+
+      // Reverb Bus
+      this.reverbNode = this.context.createConvolver();
+      this.reverbNode.buffer = this.createImpulseResponse(2.0, 2.0, false);
+      this.reverbGain = this.context.createGain();
+      this.reverbGain.gain.value = 0.3; // Default reverb amount
+
+      // Connect Graph
+      // Master Chain
+      this.compressor.connect(this.masterGain);
+      this.masterGain.connect(this.context.destination);
+
+      // Reverb Chain (Parallel)
+      this.reverbGain.connect(this.reverbNode);
+      this.reverbNode.connect(this.masterGain);
     }
-    
-    if (this.context.state === 'suspended') {
+    return true;
+  }
+
+  // Create a synthetic impulse response for reverb
+  private createImpulseResponse(duration: number, decay: number, reverse: boolean): AudioBuffer {
+    const sampleRate = this.context!.sampleRate;
+    const length = sampleRate * duration;
+    const impulse = this.context!.createBuffer(2, length, sampleRate);
+    const left = impulse.getChannelData(0);
+    const right = impulse.getChannelData(1);
+
+    for (let i = 0; i < length; i++) {
+        let n = reverse ? length - i : i;
+        // Simple exponential decay noise
+        left[i] = (Math.random() * 2 - 1) * Math.pow(1 - n / length, decay);
+        right[i] = (Math.random() * 2 - 1) * Math.pow(1 - n / length, decay);
+    }
+    return impulse;
+  }
+
+  public setReverbAmount(amount: number) {
+    if (this.reverbGain && this.context) {
+        // Clamp 0-1
+        this.reverbGain.gain.setTargetAtTime(amount, this.context.currentTime, 0.02);
+    }
+  }
+
+  public async resumeContext() {
+    if (this.context && this.context.state === 'suspended') {
       await this.context.resume();
     }
+  }
 
-    const loadPromises = instruments.map(async (inst) => {
+  public async loadKit(kit: DrumKit) {
+    if (!this.context) await this.initialize();
+
+    const loadPromises = Object.entries(kit.samples).map(async ([id, url]) => {
       try {
-        const response = await fetch(inst.sampleUrl);
+        const response = await fetch(url);
         const arrayBuffer = await response.arrayBuffer();
         const audioBuffer = await this.context!.decodeAudioData(arrayBuffer);
-        this.buffers[inst.id] = audioBuffer;
+        this.buffers[id] = audioBuffer;
       } catch (e) {
-        console.error(`Failed to load sample for ${inst.name}`, e);
+        console.error(`Failed to load sample for ${id}`, e);
       }
     });
 
     await Promise.all(loadPromises);
-    return true;
   }
 
-  public setGrid(grid: boolean[][]) {
+  public updateSequence(grid: boolean[][], tracks: Track[], steps: number) {
     this.activeGrid = grid;
+    this.activeTracks = tracks;
+    this.steps = steps;
   }
 
   public setBpm(bpm: number) {
     this.bpm = bpm;
   }
 
-  public start() {
+  public async start() {
     if (this.isPlaying || !this.context) return;
     
-    if (this.context.state === 'suspended') {
-      this.context.resume();
-    }
+    await this.resumeContext();
 
     this.isPlaying = true;
     this.currentStep = 0;
@@ -72,59 +138,66 @@ export class AudioEngine {
       this.timerID = null;
     }
     this.currentStep = 0;
-    // Reset UI immediately
     this.onStepPlay(0); 
   }
 
-  public toggle() {
-    if (this.isPlaying) {
-      this.stop();
-    } else {
-      this.start();
-    }
+  public playOneShot(instrumentId: string, volume: number = 1.0) {
+      this.resumeContext().then(() => {
+          this.playSample(instrumentId, this.context!.currentTime, volume, false);
+      });
   }
 
   private nextNote() {
     const secondsPerBeat = 60.0 / this.bpm;
-    // 16th notes = 0.25 of a beat
     this.nextNoteTime += 0.25 * secondsPerBeat; 
 
     this.currentStep++;
-    if (this.currentStep === this.steps) {
+    if (this.currentStep >= this.steps) {
       this.currentStep = 0;
     }
   }
 
   private scheduleNote(beatNumber: number, time: number) {
-    // Notify UI (using requestAnimationFrame to sync with visual update loop if desired, 
-    // but direct call is usually fine for this scale)
-    // We use a small timeout to sync the visual "flash" with the sound roughly
+    // Notify UI 
     setTimeout(() => {
         if(this.isPlaying) this.onStepPlay(beatNumber);
     }, (time - this.context!.currentTime) * 1000);
 
-    // Check instruments for this step
     this.activeGrid.forEach((row, rowIndex) => {
-      if (row[beatNumber]) {
-        this.playSample(Object.keys(this.buffers)[rowIndex], time);
+      if (row && row[beatNumber] && this.activeTracks[rowIndex]) {
+        const track = this.activeTracks[rowIndex];
+        if (!track.muted) {
+            this.playSample(track.instrumentId, time, track.volume, true);
+        }
       }
     });
   }
 
-  private playSample(instrumentId: string, time: number) {
+  private playSample(instrumentId: string, time: number, volume: number, sendToReverb: boolean) {
     if (!this.context || !this.buffers[instrumentId]) return;
 
+    // Source
     const source = this.context.createBufferSource();
     source.buffer = this.buffers[instrumentId];
-    source.connect(this.context.destination);
+
+    // Track Volume Gain
+    const gainNode = this.context.createGain();
+    gainNode.gain.value = volume;
+
+    // Routing
+    source.connect(gainNode);
+    gainNode.connect(this.compressor!); // Dry signal to compressor -> master
+    
+    if (sendToReverb && this.reverbGain) {
+        gainNode.connect(this.reverbGain); // Send to reverb bus
+    }
+
     source.start(time);
   }
 
   private scheduler() {
     if (!this.context) return;
 
-    // While there are notes that will need to play before the next interval, 
-    // schedule them and advance the pointer.
     while (this.nextNoteTime < this.context.currentTime + this.scheduleAheadTime) {
       this.scheduleNote(this.currentStep, this.nextNoteTime);
       this.nextNote();

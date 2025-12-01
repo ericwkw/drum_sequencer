@@ -1,15 +1,31 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { createEmptyGrid, DEFAULT_BPM, INSTRUMENTS } from './constants';
-import { GridPattern } from './types';
+import { createEmptyGrid, DEFAULT_BPM, KITS, DEFAULT_KIT, DEFAULT_STEPS, DEFAULT_TRACKS, INSTRUMENTS } from './constants';
+import { GridPattern, Track, InstrumentType, PatternData } from './types';
 import { AudioEngine } from './services/audioEngine';
 import { generatePatternWithGemini } from './services/geminiService';
 import SequencerGrid from './components/SequencerGrid';
 import Controls from './components/Controls';
 
+const STORAGE_KEY = 'beatme_state_v1';
+
 const App: React.FC = () => {
   // State
-  const [grid, setGrid] = useState<GridPattern>(createEmptyGrid());
+  const [tracks, setTracks] = useState<Track[]>(DEFAULT_TRACKS);
+  const [steps, setSteps] = useState<number>(DEFAULT_STEPS);
   const [bpm, setBpm] = useState<number>(DEFAULT_BPM);
+  const [currentKit, setCurrentKit] = useState<string>(DEFAULT_KIT);
+  
+  // Banking State: 4 Grids
+  const [grids, setGrids] = useState<GridPattern[]>([
+      createEmptyGrid(DEFAULT_TRACKS, DEFAULT_STEPS),
+      createEmptyGrid(DEFAULT_TRACKS, DEFAULT_STEPS),
+      createEmptyGrid(DEFAULT_TRACKS, DEFAULT_STEPS),
+      createEmptyGrid(DEFAULT_TRACKS, DEFAULT_STEPS),
+  ]);
+  const [activeBankIndex, setActiveBankIndex] = useState<number>(0);
+  
+  // Audio State
+  const [reverbAmount, setReverbAmount] = useState<number>(0.3);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [currentStep, setCurrentStep] = useState<number>(0);
   const [isAudioLoaded, setIsAudioLoaded] = useState<boolean>(false);
@@ -19,10 +35,42 @@ const App: React.FC = () => {
   // Refs
   const audioEngineRef = useRef<AudioEngine | null>(null);
 
+  // Load from Local Storage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      try {
+        const parsed: PatternData = JSON.parse(saved);
+        if (parsed.tracks) setTracks(parsed.tracks);
+        if (parsed.steps) setSteps(parsed.steps);
+        if (parsed.grids && Array.isArray(parsed.grids)) setGrids(parsed.grids);
+        if (parsed.bpm) setBpm(parsed.bpm);
+        if (parsed.currentKit && KITS[parsed.currentKit]) setCurrentKit(parsed.currentKit);
+        if (parsed.activeBankIndex !== undefined) setActiveBankIndex(parsed.activeBankIndex);
+      } catch (e) {
+        console.warn("Failed to load saved state", e);
+      }
+    }
+  }, []);
+
+  // Save to Local Storage on change
+  useEffect(() => {
+    if (isAudioLoaded) { 
+      const stateToSave: PatternData = { 
+          version: 1,
+          grids, 
+          bpm, 
+          currentKit, 
+          tracks, 
+          steps,
+          activeBankIndex 
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(stateToSave));
+    }
+  }, [grids, bpm, currentKit, tracks, steps, activeBankIndex, isAudioLoaded]);
+
   // Initialize Audio Engine
   useEffect(() => {
-    // We instantiate the engine but don't load buffers until interaction or mount if desired
-    // To support mobile, we usually wait for interaction, but here we load on mount for desktop web app feel
     const engine = new AudioEngine((step) => {
       setCurrentStep(step);
     });
@@ -30,10 +78,14 @@ const App: React.FC = () => {
     audioEngineRef.current = engine;
 
     const loadAudio = async () => {
-      setStatusMessage("Loading samples...");
-      await engine.initialize(INSTRUMENTS);
+      setStatusMessage(`Loading ${KITS[currentKit].name}...`);
+      await engine.initialize();
+      engine.setReverbAmount(reverbAmount);
+      await engine.loadKit(KITS[currentKit]);
+      
       setIsAudioLoaded(true);
-      setStatusMessage("");
+      setStatusMessage("Ready.");
+      setTimeout(() => setStatusMessage(""), 3000);
     };
 
     loadAudio();
@@ -43,12 +95,31 @@ const App: React.FC = () => {
     };
   }, []);
 
-  // Update Engine when Grid/BPM changes
+  // Handle Kit Change
+  useEffect(() => {
+    if (audioEngineRef.current && isAudioLoaded) {
+      const changeKit = async () => {
+        setStatusMessage(`Loading ${KITS[currentKit].name}...`);
+        await audioEngineRef.current?.loadKit(KITS[currentKit]);
+        setStatusMessage("");
+      };
+      changeKit();
+    }
+  }, [currentKit, isAudioLoaded]);
+
+  // Handle Reverb Change
+  useEffect(() => {
+      if(audioEngineRef.current) {
+          audioEngineRef.current.setReverbAmount(reverbAmount);
+      }
+  }, [reverbAmount]);
+
+  // Update Engine when Grid/BPM/Tracks/Steps/Bank changes
   useEffect(() => {
     if (audioEngineRef.current) {
-      audioEngineRef.current.setGrid(grid);
+      audioEngineRef.current.updateSequence(grids[activeBankIndex], tracks, steps);
     }
-  }, [grid]);
+  }, [grids, activeBankIndex, tracks, steps]);
 
   useEffect(() => {
     if (audioEngineRef.current) {
@@ -57,13 +128,35 @@ const App: React.FC = () => {
   }, [bpm]);
 
   // Handlers
-  const handleToggleStep = useCallback((row: number, col: number) => {
-    setGrid((prev) => {
-      const newGrid = prev.map((r) => [...r]);
-      newGrid[row][col] = !newGrid[row][col];
-      return newGrid;
+  const handleToggleStep = useCallback((row: number, col: number, e: React.MouseEvent) => {
+    if (audioEngineRef.current) {
+        audioEngineRef.current.resumeContext();
+    }
+
+    setGrids((prevGrids) => {
+      const newGrids = [...prevGrids];
+      const newGrid = newGrids[activeBankIndex].map((r) => [...r]);
+      
+      if (e.shiftKey) {
+        newGrid[row] = Array(steps).fill(false);
+        setStatusMessage("Row cleared");
+        setTimeout(() => setStatusMessage(""), 1000);
+      } else {
+        newGrid[row][col] = !newGrid[row][col];
+      }
+      
+      newGrids[activeBankIndex] = newGrid;
+      return newGrids;
     });
-  }, []);
+  }, [steps, activeBankIndex]);
+
+  const handleTrackChange = (index: number, updates: Partial<Track>) => {
+      setTracks(prev => {
+          const newTracks = [...prev];
+          newTracks[index] = { ...newTracks[index], ...updates };
+          return newTracks;
+      });
+  };
 
   const handlePlayToggle = () => {
     if (!audioEngineRef.current) return;
@@ -72,18 +165,114 @@ const App: React.FC = () => {
       audioEngineRef.current.stop();
       setIsPlaying(false);
     } else {
-      // AudioContext requires user gesture to resume if suspended
       audioEngineRef.current.start();
       setIsPlaying(true);
     }
   };
 
   const handleClear = () => {
-    setGrid(createEmptyGrid());
-    if (isPlaying && audioEngineRef.current) {
-        // Keep playing but silence
-        audioEngineRef.current.setGrid(createEmptyGrid());
-    }
+    setGrids(prev => {
+        const newGrids = [...prev];
+        newGrids[activeBankIndex] = createEmptyGrid(tracks, steps);
+        return newGrids;
+    });
+    setStatusMessage("Pattern cleared");
+    setTimeout(() => setStatusMessage(""), 2000);
+  };
+
+  const handleStepsChange = (newSteps: number) => {
+      if (newSteps < 4 || newSteps > 64) return;
+      
+      setSteps(newSteps);
+      setGrids(prevGrids => {
+          return prevGrids.map(grid => {
+              return grid.map(row => {
+                if (row.length < newSteps) {
+                    return [...row, ...Array(newSteps - row.length).fill(false)];
+                } else {
+                    return row.slice(0, newSteps);
+                }
+              });
+          });
+      });
+  };
+
+  const handleAddTrack = (instrumentId: InstrumentType) => {
+      const instrumentDef = INSTRUMENTS.find(i => i.id === instrumentId);
+      if (!instrumentDef) return;
+
+      const newTrack: Track = {
+          id: `${instrumentId}-${Date.now()}`,
+          instrumentId: instrumentId,
+          name: instrumentDef.name,
+          color: instrumentDef.color,
+          volume: 0.8,
+          muted: false
+      };
+
+      setTracks(prev => [...prev, newTrack]);
+      setGrids(prevGrids => prevGrids.map(grid => [...grid, Array(steps).fill(false)]));
+  };
+
+  const handleRemoveTrack = (index: number) => {
+      if (tracks.length <= 1) return;
+      setTracks(prev => prev.filter((_, i) => i !== index));
+      setGrids(prevGrids => prevGrids.map(grid => grid.filter((_, i) => i !== index)));
+  };
+
+  // Export Project
+  const handleExport = () => {
+    const projectData: PatternData = {
+        version: 1,
+        grids,
+        bpm,
+        currentKit,
+        tracks,
+        steps,
+        activeBankIndex
+    };
+    const blob = new Blob([JSON.stringify(projectData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `beatme-project-${Date.now()}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    setStatusMessage("Project exported!");
+    setTimeout(() => setStatusMessage(""), 2000);
+  };
+
+  // Import Project
+  const handleImport = (file: File) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+          try {
+              const text = e.target?.result as string;
+              const data = JSON.parse(text);
+              if (data.version && data.grids) {
+                  // Apply state
+                  setIsPlaying(false);
+                  audioEngineRef.current?.stop();
+                  
+                  if(data.tracks) setTracks(data.tracks);
+                  if(data.steps) setSteps(data.steps);
+                  if(data.grids) setGrids(data.grids);
+                  if(data.bpm) setBpm(data.bpm);
+                  if(data.currentKit && KITS[data.currentKit]) setCurrentKit(data.currentKit);
+                  if(data.activeBankIndex !== undefined) setActiveBankIndex(data.activeBankIndex);
+                  
+                  setStatusMessage("Project loaded successfully.");
+              } else {
+                  throw new Error("Invalid project file");
+              }
+          } catch (err) {
+              console.error(err);
+              setStatusMessage("Error loading project.");
+          }
+      };
+      reader.readAsText(file);
   };
 
   const handleGenerate = async (prompt: string) => {
@@ -92,21 +281,42 @@ const App: React.FC = () => {
         return;
     }
 
+    audioEngineRef.current?.resumeContext();
     setIsGenerating(true);
-    setStatusMessage("AI is composing your beat...");
+    setStatusMessage("AI is composing...");
     
-    // Optional: Stop playing while generating to avoid jarring changes, or keep playing for "live coding" feel.
-    // Let's keep playing for the "Live" feel.
-
     try {
-      const result = await generatePatternWithGemini(prompt, bpm);
-      setGrid(result.grid);
+      const result = await generatePatternWithGemini(prompt, bpm, steps);
+      
+      const aiPatterns: Record<string, boolean[]> = {
+          'kick': result.grid[0],
+          'snare': result.grid[1],
+          'hihat': result.grid[2],
+          'clap': result.grid[3]
+      };
+
+      const newGridForActiveBank = tracks.map(track => {
+          const pattern = aiPatterns[track.instrumentId];
+          if (pattern) {
+              if (pattern.length < steps) return [...pattern, ...Array(steps - pattern.length).fill(false)];
+              if (pattern.length > steps) return pattern.slice(0, steps);
+              return pattern;
+          }
+          return Array(steps).fill(false);
+      });
+
+      // Update ONLY the active bank
+      setGrids(prev => {
+          const next = [...prev];
+          next[activeBankIndex] = newGridForActiveBank;
+          return next;
+      });
+
       setBpm(result.bpm);
       setStatusMessage(`Generated: ${prompt}`);
-      
-      // Clear status after 3 seconds
       setTimeout(() => setStatusMessage(""), 3000);
     } catch (error) {
+      console.error(error);
       setStatusMessage("Failed to generate pattern.");
     } finally {
       setIsGenerating(false);
@@ -118,10 +328,10 @@ const App: React.FC = () => {
       {/* Header */}
       <header className="mb-8 text-center">
         <h1 className="text-4xl sm:text-5xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-purple-500 tracking-tight">
-          AI BeatGenius
+          BeatMe
         </h1>
         <p className="text-gray-400 mt-2 text-sm sm:text-base">
-          Gemini-Powered Drum Sequencer
+          Sequence beats manually or dream them up with AI.
         </p>
       </header>
 
@@ -129,26 +339,46 @@ const App: React.FC = () => {
       <Controls
         isPlaying={isPlaying}
         bpm={bpm}
+        steps={steps}
+        currentKit={currentKit}
+        activeBankIndex={activeBankIndex}
+        reverbAmount={reverbAmount}
         onPlayToggle={handlePlayToggle}
         onBpmChange={setBpm}
+        onStepsChange={handleStepsChange}
+        onKitChange={setCurrentKit}
+        onBankChange={setActiveBankIndex}
+        onReverbChange={setReverbAmount}
         onClear={handleClear}
         onGenerate={handleGenerate}
+        onAddTrack={handleAddTrack}
+        onExport={handleExport}
+        onImport={handleImport}
         isGenerating={isGenerating}
         isLoaded={isAudioLoaded}
       />
 
       {/* Grid */}
-      <div className="w-full max-w-4xl">
+      <div className="w-full max-w-4xl relative">
         <SequencerGrid
-          grid={grid}
+          grid={grids[activeBankIndex]}
+          tracks={tracks}
+          steps={steps}
           currentStep={currentStep}
           onToggle={handleToggleStep}
+          onRemoveTrack={handleRemoveTrack}
+          onTrackChange={handleTrackChange}
           isLoaded={isAudioLoaded}
         />
+        {!isAudioLoaded && (
+          <div className="absolute inset-0 bg-gray-950/80 flex items-center justify-center z-10 rounded-xl">
+             <span className="text-cyan-400 font-mono animate-pulse">Initializing Audio Engine...</span>
+          </div>
+        )}
       </div>
 
       {/* Status Bar */}
-      <div className="h-8 mt-4">
+      <div className="h-8 mt-4 text-center">
         {statusMessage && (
           <div className="text-sm font-mono text-cyan-400 animate-pulse">
             {'>'} {statusMessage}

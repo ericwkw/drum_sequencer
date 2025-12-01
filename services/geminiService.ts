@@ -1,22 +1,22 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import { GridPattern, InstrumentType } from "../types";
-import { STEPS, createEmptyGrid, INSTRUMENTS } from "../constants";
+import { GridPattern } from "../types";
 
-const getSystemInstruction = () => `
+const getSystemInstruction = (steps: number) => `
 You are a professional drum machine sequencer expert. 
-You will receive a description of a drum beat (e.g., "fast techno", "slow hip hop", "jungle").
-You must output a JSON object representing a 16-step grid for 4 instruments in this specific order:
+You will receive a description of a drum beat.
+You must output a JSON object representing a ${steps}-step grid for 4 basic instruments:
 1. Kick
 2. Snare
 3. Hi-Hat
 4. Clap
 
-The grid should be a flat array of booleans for each instrument, length 16.
+The grid should be a flat array of booleans for each instrument, length ${steps}.
 `;
 
 export const generatePatternWithGemini = async (
   prompt: string, 
-  currentBpm: number
+  currentBpm: number,
+  steps: number
 ): Promise<{ grid: GridPattern; bpm: number }> => {
   
   if (!process.env.API_KEY) {
@@ -28,36 +28,36 @@ export const generatePatternWithGemini = async (
   try {
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
-      contents: `Generate a drum pattern for: ${prompt}. Ideally suggests a BPM suitable for this style.`,
+      contents: `Generate a ${steps}-step drum pattern for: ${prompt}.`,
       config: {
-        systemInstruction: getSystemInstruction(),
+        systemInstruction: getSystemInstruction(steps),
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.OBJECT,
           properties: {
             suggestedBpm: {
               type: Type.NUMBER,
-              description: "The recommended BPM for this genre.",
+              description: "The recommended BPM.",
             },
             kickPattern: {
               type: Type.ARRAY,
               items: { type: Type.BOOLEAN },
-              description: "16 steps for Kick",
+              description: `Steps for Kick (length ${steps})`,
             },
             snarePattern: {
               type: Type.ARRAY,
               items: { type: Type.BOOLEAN },
-              description: "16 steps for Snare",
+              description: `Steps for Snare (length ${steps})`,
             },
             hihatPattern: {
               type: Type.ARRAY,
               items: { type: Type.BOOLEAN },
-              description: "16 steps for Hi-Hat",
+              description: `Steps for Hi-Hat (length ${steps})`,
             },
             clapPattern: {
               type: Type.ARRAY,
               items: { type: Type.BOOLEAN },
-              description: "16 steps for Clap",
+              description: `Steps for Clap (length ${steps})`,
             },
           },
           required: ["suggestedBpm", "kickPattern", "snarePattern", "hihatPattern", "clapPattern"],
@@ -65,22 +65,28 @@ export const generatePatternWithGemini = async (
       },
     });
 
-    const text = response.text;
+    let text = response.text;
     if (!text) throw new Error("No response from AI");
+
+    // Clean Markdown
+    if (text.startsWith("```")) {
+      text = text.replace(/^```json\s*/, "").replace(/^```\s*/, "").replace(/\s*```$/, "");
+    }
 
     const data = JSON.parse(text);
 
-    // Validate lengths
-    const ensure16 = (arr: boolean[]) => {
-      if (arr.length >= STEPS) return arr.slice(0, STEPS);
-      return [...arr, ...Array(STEPS - arr.length).fill(false)];
+    // Helper to ensure exact step count
+    const ensureSteps = (arr: boolean[]) => {
+      if (!arr) return Array(steps).fill(false);
+      if (arr.length >= steps) return arr.slice(0, steps);
+      return [...arr, ...Array(steps - arr.length).fill(false)];
     };
 
     const newGrid: GridPattern = [
-      ensure16(data.kickPattern || []),
-      ensure16(data.snarePattern || []),
-      ensure16(data.hihatPattern || []),
-      ensure16(data.clapPattern || []),
+      ensureSteps(data.kickPattern),
+      ensureSteps(data.snarePattern),
+      ensureSteps(data.hihatPattern),
+      ensureSteps(data.clapPattern),
     ];
 
     return {
@@ -90,7 +96,6 @@ export const generatePatternWithGemini = async (
 
   } catch (error) {
     console.error("Gemini Generation Error:", error);
-    // Return empty fallback on error
-    return { grid: createEmptyGrid(), bpm: currentBpm };
+    throw error;
   }
 };

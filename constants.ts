@@ -1,37 +1,69 @@
-import { Instrument, InstrumentType, GridPattern } from './types';
+import { Instrument, InstrumentType, GridPattern, DrumKit, Track } from './types';
 
-// Using high-quality open domain samples
 export const INSTRUMENTS: Instrument[] = [
   {
     id: 'kick',
     name: 'Kick',
-    color: 'bg-rose-500',
-    sampleUrl: 'https://cdn.jsdelivr.net/gh/Tonejs/audio/drum-samples/CR78/kick.mp3'
+    color: 'bg-rose-500'
   },
   {
     id: 'snare',
     name: 'Snare',
-    color: 'bg-amber-500',
-    sampleUrl: 'https://cdn.jsdelivr.net/gh/Tonejs/audio/drum-samples/CR78/snare.mp3'
+    color: 'bg-amber-500'
   },
   {
     id: 'hihat',
     name: 'Hi-Hat',
-    color: 'bg-emerald-500',
-    sampleUrl: 'https://cdn.jsdelivr.net/gh/Tonejs/audio/drum-samples/CR78/hihat.mp3'
+    color: 'bg-emerald-500'
   },
   {
     id: 'clap',
     name: 'Clap',
-    color: 'bg-violet-500',
-    sampleUrl: 'https://cdn.jsdelivr.net/gh/Tonejs/audio/drum-samples/CR78/tom1.mp3' // Using a Tom/Perc sound as clap alternative for CR78 set
+    color: 'bg-violet-500'
   }
 ];
 
-export const STEPS = 16;
-export const DEFAULT_BPM = 120;
+export const KITS: Record<string, DrumKit> = {
+  CR78: {
+    name: "Classic (CR78)",
+    samples: {
+      kick: "https://cdn.jsdelivr.net/gh/Tonejs/audio/drum-samples/CR78/kick.mp3",
+      snare: "https://cdn.jsdelivr.net/gh/Tonejs/audio/drum-samples/CR78/snare.mp3",
+      hihat: "https://cdn.jsdelivr.net/gh/Tonejs/audio/drum-samples/CR78/hihat.mp3",
+      clap: "https://cdn.jsdelivr.net/gh/Tonejs/audio/drum-samples/CR78/tom1.mp3"
+    }
+  },
+  KPR77: {
+    name: "Analog (KPR77)",
+    samples: {
+      kick: "https://cdn.jsdelivr.net/gh/Tonejs/audio/drum-samples/KPR77/kick.mp3",
+      snare: "https://cdn.jsdelivr.net/gh/Tonejs/audio/drum-samples/KPR77/snare.mp3",
+      hihat: "https://cdn.jsdelivr.net/gh/Tonejs/audio/drum-samples/KPR77/hihat.mp3",
+      clap: "https://cdn.jsdelivr.net/gh/Tonejs/audio/drum-samples/KPR77/clap.mp3"
+    }
+  },
+  LINN: {
+    name: "Digital (Linn)",
+    samples: {
+      kick: "https://cdn.jsdelivr.net/gh/Tonejs/audio/drum-samples/LinnDrum/kick.mp3",
+      snare: "https://cdn.jsdelivr.net/gh/Tonejs/audio/drum-samples/LinnDrum/snare.mp3",
+      hihat: "https://cdn.jsdelivr.net/gh/Tonejs/audio/drum-samples/LinnDrum/hihat.mp3",
+      clap: "https://cdn.jsdelivr.net/gh/Tonejs/audio/drum-samples/LinnDrum/clap.mp3"
+    }
+  }
+};
 
-// Helper to create an empty grid
-export const createEmptyGrid = (): GridPattern => {
-  return INSTRUMENTS.map(() => Array(STEPS).fill(false));
+export const DEFAULT_STEPS = 16;
+export const DEFAULT_BPM = 120;
+export const DEFAULT_KIT = "CR78";
+
+export const DEFAULT_TRACKS: Track[] = [
+  { id: 'track-0', instrumentId: 'kick', name: 'Kick', color: 'bg-rose-500', volume: 0.9, muted: false },
+  { id: 'track-1', instrumentId: 'snare', name: 'Snare', color: 'bg-amber-500', volume: 0.8, muted: false },
+  { id: 'track-2', instrumentId: 'hihat', name: 'Hi-Hat', color: 'bg-emerald-500', volume: 0.7, muted: false },
+  { id: 'track-3', instrumentId: 'clap', name: 'Clap', color: 'bg-violet-500', volume: 0.8, muted: false }
+];
+
+export const createEmptyGrid = (tracks: Track[], steps: number): GridPattern => {
+  return tracks.map(() => Array(steps).fill(false));
 };
