@@ -37,7 +37,7 @@ const SequencerGrid: React.FC<SequencerGridProps> = ({
         <div className="flex flex-col gap-2 min-w-max">
           
           {/* Timeline Ruler & Header */}
-          <div className="flex gap-8 items-end mb-1">
+          <div className="flex gap-16 items-end mb-1">
             {/* Header Spacer for controls - Perfectly aligned with Track Row columns */}
             {/* Expanded width to w-72 to fit Name + Mixer comfortably */}
             <div className="w-72 shrink-0 flex gap-2 px-2 pb-1 text-[10px] text-gray-500 font-bold uppercase tracking-wider items-end">
@@ -73,7 +73,7 @@ const SequencerGrid: React.FC<SequencerGridProps> = ({
 
           {/* Track Rows */}
           {tracks.map((track, rowIndex) => (
-            <div key={track.id} className="flex items-center gap-8 group/row">
+            <div key={track.id} className="flex items-center gap-16 group/row">
               {/* Instrument Controls Sidebar */}
               <div className="w-72 shrink-0 flex items-center gap-2 bg-gray-900/50 p-2 rounded border border-transparent hover:border-gray-800 transition-colors">
                 
