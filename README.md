@@ -1,5 +1,3 @@
-## Support me: https://ko-fi.com/ericwkw
-
 # BeatMe 🥁✨
 
 **BeatMe** is a professional-grade web drum sequencer that fuses classic groovebox workflows with the power of Generative AI. 
