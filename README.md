@@ -20,7 +20,7 @@ Designed for musicians and producers, it runs entirely in the browser using the 
 - **Text-to-Beat**: Provider-agnostic — talks to any OpenAI-compatible chat-completions endpoint (OpenRouter, Gemini's OpenAI-compat endpoint, etc.), config-driven via `.env`. Just type a prompt, and the AI generates a full multi-track pattern instantly.
 - **Smart Mapping**: The AI understands specific instrument roles (e.g., syncing open hats with kicks) and genre-specific tempos.
 - **Retries on bad output**: an invalid response gets one nudged retry before failing.
-- **Offline fallback**: no API key configured? Dream still works, generating from a built-in deterministic pattern instead of blocking the feature.
+- Requires an API key — Dream is disabled without one (see Configure Environment below).
 
 ### 🎹 Advanced Sequencing
 - **Pattern Banking**: 4 distinct banks (**A, B, C, D**) per project. Create variations for Verses, Choruses, and Drops and switch instantly.
@@ -48,7 +48,7 @@ Designed for musicians and producers, it runs entirely in the browser using the 
 
 ### Prerequisites
 - Node.js (v18 or higher)
-- An API key for AI generation (optional — Dream falls back to an offline generator without one)
+- An API key for AI generation (required for the Dream feature)
 
 ### Installation
 
@@ -63,10 +63,10 @@ Designed for musicians and producers, it runs entirely in the browser using the 
    npm install
    ```
 
-3. **Configure Environment (optional)**
-   AI generation talks to any OpenAI-compatible `/chat/completions` endpoint. Create a
-   `.env` file in the root directory (or configure Vercel environment variables) to point
-   it at a provider:
+3. **Configure Environment**
+   AI generation talks to any OpenAI-compatible `/chat/completions` endpoint and requires
+   a key. Create a `.env` file in the root directory (or configure Vercel environment
+   variables):
    ```env
    # OpenRouter (default) — get a free key at https://openrouter.ai/keys
    API_KEY=your_openrouter_key_here
@@ -75,7 +75,7 @@ Designed for musicians and producers, it runs entirely in the browser using the 
    # LLM_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai
    # LLM_MODEL=gemini-2.5-flash
    ```
-   No key? Dream still works — it falls back to a built-in offline pattern generator.
+   Without a key, the app still runs but the Dream (AI generation) button will fail.
 
    Note: this key is compiled directly into the client bundle at build time (there's no
    backend proxy), so it is visible to anyone who inspects the deployed app. Use a free

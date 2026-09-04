@@ -334,9 +334,14 @@ const App: React.FC = () => {
   };
 
   const handleGenerate = async (prompt: string) => {
+    if (!process.env.API_KEY) {
+        alert("Please set your API_KEY in the environment.");
+        return;
+    }
+
     audioEngineRef.current?.resumeContext();
     setIsGenerating(true);
-    setStatusMessage(process.env.API_KEY ? "AI is composing..." : "No API key set — using the offline generator...");
+    setStatusMessage("AI is composing...");
 
     try {
       const result = await generatePattern(prompt, bpm, steps);
@@ -360,7 +365,7 @@ const App: React.FC = () => {
       });
 
       setBpm(result.bpm);
-      setStatusMessage(result.offline ? `Generated offline (no AI key set): ${prompt}` : `Generated: ${prompt}`);
+      setStatusMessage(`Generated: ${prompt}`);
       setTimeout(() => setStatusMessage(""), 3000);
     } catch (error) {
       console.error(error);
@@ -444,7 +449,7 @@ const App: React.FC = () => {
         <p>Built with React, Web Audio API & an LLM of your choice.</p>
         <p className="mt-1 opacity-50">App data is stored locally on your device.</p>
         {!process.env.API_KEY && (
-           <p className="text-amber-500 mt-2">No AI key configured — Dream falls back to an offline pattern generator.</p>
+           <p className="text-red-500 mt-2">Warning: API_KEY not detected. AI features will fail.</p>
         )}
       </footer>
     </div>

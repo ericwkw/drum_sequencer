@@ -1,4 +1,3 @@
-import { InstrumentType } from "../types";
 import { normalizeRow } from "./patternUtils";
 
 // Provider is config-driven: any OpenAI-compatible chat-completions endpoint.
@@ -92,35 +91,6 @@ const isUsablePattern = (data: any, steps: number): boolean => {
   return hasAny && (typeof data.suggestedBpm === 'number' || data.suggestedBpm === undefined);
 };
 
-// Deterministic, offline pattern used when no API key is configured or every
-// LLM attempt fails — the feature degrades instead of doing nothing.
-const getOfflinePattern = (steps: number): Record<InstrumentType, boolean[]> => {
-  // A generic 16-step reference groove, scaled to whatever step count is active.
-  const reference: Record<InstrumentType, boolean[]> = {
-    kick:     [true, false, false, false, false, false, true, false, false, false, true, false, false, false, false, false],
-    snare:    [false, false, false, false, true, false, false, false, false, false, false, false, true, false, false, false],
-    hihat:    [true, false, true, false, true, false, true, false, true, false, true, false, true, false, true, false],
-    openhat:  [false, false, false, false, false, false, false, true, false, false, false, false, false, false, false, true],
-    clap:     [false, false, false, false, true, false, false, false, false, false, false, false, true, false, false, false],
-    tom_high: Array(16).fill(false),
-    tom_low:  Array(16).fill(false),
-    crash:    [true, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false],
-    ride:     Array(16).fill(false),
-  };
-  const scale = (row: boolean[]) => Array.from({ length: steps }, (_, i) => row[Math.floor((i / steps) * 16)]);
-  return {
-    kick: scale(reference.kick),
-    snare: scale(reference.snare),
-    hihat: scale(reference.hihat),
-    openhat: scale(reference.openhat),
-    clap: scale(reference.clap),
-    tom_high: scale(reference.tom_high),
-    tom_low: scale(reference.tom_low),
-    crash: scale(reference.crash),
-    ride: scale(reference.ride),
-  };
-};
-
 export const generatePattern = async (
   prompt: string,
   currentBpm: number,
@@ -128,13 +98,11 @@ export const generatePattern = async (
 ): Promise<{
   grid: Record<string, boolean[]>;
   bpm: number;
-  offline: boolean;
 }> => {
   const apiKey = process.env.API_KEY;
 
   if (!apiKey) {
-    console.warn("No LLM API key set — using the offline pattern generator");
-    return { grid: getOfflinePattern(steps), bpm: currentBpm, offline: true };
+    throw new Error("No API key configured. Set API_KEY in .env to use AI generation.");
   }
 
   const userPrompt = `Generate a ${steps}-step drum pattern for: ${prompt}. Current tempo is ${currentBpm} BPM unless the description implies otherwise.`;
@@ -158,7 +126,7 @@ export const generatePattern = async (
           crash: normalizeRow(data.crashPattern, steps),
           ride: normalizeRow(data.ridePattern, steps),
         };
-        return { grid: patterns, bpm: data.suggestedBpm || currentBpm, offline: false };
+        return { grid: patterns, bpm: data.suggestedBpm || currentBpm };
       }
       console.warn(`AI output failed validation (attempt ${attempt + 1})`);
     } catch (error) {

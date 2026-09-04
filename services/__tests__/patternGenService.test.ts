@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import { generatePattern } from '../patternGenService';
 
 const okResponse = (body: unknown) => ({
@@ -21,27 +21,13 @@ describe('generatePattern', () => {
     vi.restoreAllMocks();
   });
 
-  it('falls back to the offline generator when no API key is set', async () => {
+  it('throws when no API key is configured, without calling the network', async () => {
     (process.env as any).API_KEY = '';
     const fetchSpy = vi.fn();
     global.fetch = fetchSpy as any;
 
-    const result = await generatePattern('lofi beat', 90, 16);
-
+    await expect(generatePattern('lofi beat', 90, 16)).rejects.toThrow(/API key/i);
     expect(fetchSpy).not.toHaveBeenCalled();
-    expect(result.offline).toBe(true);
-    expect(result.bpm).toBe(90);
-    expect(result.grid.kick).toHaveLength(16);
-    expect(result.grid.kick.some(Boolean)).toBe(true); // not a silent pattern
-  });
-
-  it('scales the offline pattern to an arbitrary step count', async () => {
-    (process.env as any).API_KEY = '';
-    global.fetch = vi.fn() as any;
-
-    const result = await generatePattern('anything', 120, 14); // 7/8
-
-    Object.values(result.grid).forEach((row) => expect(row).toHaveLength(14));
   });
 
   it('parses a valid LLM response and returns the requested-length rows', async () => {
@@ -56,7 +42,6 @@ describe('generatePattern', () => {
     const result = await generatePattern('fast dnb', 120, 4);
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(result.offline).toBe(false);
     expect(result.bpm).toBe(140);
     expect(result.grid.kick).toEqual([true, false, true, false]);
     expect(result.grid.snare).toEqual([false, true, false, true]);
@@ -83,7 +68,6 @@ describe('generatePattern', () => {
     const result = await generatePattern('techno', 120, 2);
 
     expect(fetchMock).toHaveBeenCalledTimes(2);
-    expect(result.offline).toBe(false);
     expect(result.grid.kick).toEqual([true, true]);
   });
 
