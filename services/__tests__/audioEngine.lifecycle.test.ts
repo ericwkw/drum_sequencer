@@ -49,6 +49,7 @@ class FakeAudioContext {
     return { getChannelData: () => new Float32Array(length) };
   }
   createBufferSource() { return new FakeBufferSource(); }
+  decodeAudioData(_buffer: ArrayBuffer) { return Promise.resolve({}); }
   resume() { return Promise.resolve(); }
   close() { this.state = 'closed'; return Promise.resolve(); }
 }
@@ -96,5 +97,31 @@ describe('AudioEngine lifecycle', () => {
     const engine = new AudioEngine(() => {});
     const started = await engine.start();
     expect(started).toBe(false);
+  });
+
+  it('loadKit() does not throw when dispose() closes the context mid-fetch', async () => {
+    // Regression: React StrictMode's dev-only double mount/unmount can call
+    // dispose() (nulling the context) while a previous mount's loadKit() is
+    // still awaiting fetch/decodeAudioData. That used to throw
+    // "Cannot read properties of null (reading 'decodeAudioData')" from
+    // inside the in-flight promise.
+    let resolveFetch: (r: Response) => void;
+    const fetchPromise = new Promise<Response>((resolve) => { resolveFetch = resolve; });
+    vi.stubGlobal('fetch', vi.fn().mockReturnValue(fetchPromise));
+
+    const engine = new AudioEngine(() => {});
+    await engine.initialize();
+
+    const loadPromise = engine.loadKit({
+      name: 'Test',
+      samples: { kick: 'https://example.com/kick.mp3' } as any,
+    });
+
+    await engine.dispose();
+
+    resolveFetch!({ ok: true, arrayBuffer: () => Promise.resolve(new ArrayBuffer(0)) } as any);
+
+    await expect(loadPromise).resolves.toBeDefined();
+    vi.unstubAllGlobals();
   });
 });

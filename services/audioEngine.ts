@@ -116,6 +116,10 @@ export class AudioEngine {
   // dead track can be surfaced to the user instead of just logged.
   public async loadKit(kit: DrumKit): Promise<string[]> {
     if (!this.context) await this.initialize();
+    // Captured so a concurrent dispose() (e.g. React StrictMode's dev-only
+    // double mount/unmount) that nulls `this.context` mid-fetch can't turn
+    // an in-flight decodeAudioData call into a null-dereference crash.
+    const context = this.context;
 
     const failed: string[] = [];
 
@@ -126,7 +130,8 @@ export class AudioEngine {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         const arrayBuffer = await response.arrayBuffer();
-        const audioBuffer = await this.context!.decodeAudioData(arrayBuffer);
+        if (!context || context.state === 'closed') return;
+        const audioBuffer = await context.decodeAudioData(arrayBuffer);
         this.buffers[id] = audioBuffer;
       } catch (e) {
         console.error(`Failed to load sample for ${id} from ${url}`, e);
