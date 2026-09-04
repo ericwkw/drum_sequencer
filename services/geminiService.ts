@@ -1,6 +1,7 @@
 
 import { GoogleGenAI, Type } from "@google/genai";
 import { GridPattern } from "../types";
+import { normalizeRow } from "./patternUtils";
 
 const getSystemInstruction = (steps: number) => `
 You are a professional drum machine sequencer expert. 
@@ -65,23 +66,16 @@ export const generatePatternWithGemini = async (
 
     const data = JSON.parse(text);
 
-    // Helper to ensure exact step count
-    const ensureSteps = (arr: boolean[]) => {
-      if (!arr) return Array(steps).fill(false);
-      if (arr.length >= steps) return arr.slice(0, steps);
-      return [...arr, ...Array(steps - arr.length).fill(false)];
-    };
-
     const patterns: Record<string, boolean[]> = {
-        'kick': ensureSteps(data.kickPattern),
-        'snare': ensureSteps(data.snarePattern),
-        'hihat': ensureSteps(data.hihatPattern),
-        'clap': ensureSteps(data.clapPattern),
-        'openhat': ensureSteps(data.openhatPattern),
-        'tom_high': ensureSteps(data.tomHighPattern),
-        'tom_low': ensureSteps(data.tomLowPattern),
-        'crash': ensureSteps(data.crashPattern),
-        'ride': ensureSteps(data.ridePattern),
+        'kick': normalizeRow(data.kickPattern, steps),
+        'snare': normalizeRow(data.snarePattern, steps),
+        'hihat': normalizeRow(data.hihatPattern, steps),
+        'clap': normalizeRow(data.clapPattern, steps),
+        'openhat': normalizeRow(data.openhatPattern, steps),
+        'tom_high': normalizeRow(data.tomHighPattern, steps),
+        'tom_low': normalizeRow(data.tomLowPattern, steps),
+        'crash': normalizeRow(data.crashPattern, steps),
+        'ride': normalizeRow(data.ridePattern, steps),
     };
 
     return {

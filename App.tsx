@@ -4,6 +4,7 @@ import { createEmptyGrid, DEFAULT_BPM, KITS, DEFAULT_KIT, DEFAULT_STEPS, DEFAULT
 import { GridPattern, Track, InstrumentType, PatternData } from './types';
 import { AudioEngine } from './services/audioEngine';
 import { generatePatternWithGemini } from './services/geminiService';
+import { normalizePatternData } from './services/patternUtils';
 import SequencerGrid from './components/SequencerGrid';
 import Controls from './components/Controls';
 
@@ -37,21 +38,23 @@ const App: React.FC = () => {
 
   // Refs
   const audioEngineRef = useRef<AudioEngine | null>(null);
+  const loadedKitRef = useRef<string | null>(null);
 
   // Load from Local Storage on mount
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       try {
-        const parsed: PatternData = JSON.parse(saved);
-        if (parsed.name) setProjectName(parsed.name);
-        if (parsed.tracks) setTracks(parsed.tracks);
-        if (parsed.steps) setSteps(parsed.steps);
-        if (parsed.swing) setSwing(parsed.swing);
-        if (parsed.grids && Array.isArray(parsed.grids)) setGrids(parsed.grids);
-        if (parsed.bpm) setBpm(parsed.bpm);
-        if (parsed.currentKit && KITS[parsed.currentKit]) setCurrentKit(parsed.currentKit);
-        if (parsed.activeBankIndex !== undefined) setActiveBankIndex(parsed.activeBankIndex);
+        const raw = JSON.parse(saved);
+        const normalized = normalizePatternData(raw, DEFAULT_TRACKS);
+        setProjectName(normalized.name!);
+        setTracks(normalized.tracks);
+        setSteps(normalized.steps);
+        setSwing(normalized.swing);
+        setGrids(normalized.grids);
+        setBpm(normalized.bpm);
+        if (KITS[normalized.currentKit]) setCurrentKit(normalized.currentKit);
+        setActiveBankIndex(normalized.activeBankIndex);
       } catch (e) {
         console.warn("Failed to load saved state", e);
       }
@@ -89,27 +92,30 @@ const App: React.FC = () => {
       await engine.initialize();
       engine.setReverbAmount(reverbAmount);
       engine.setSwing(swing);
-      await engine.loadKit(KITS[currentKit]);
-      
+      const failed = await engine.loadKit(KITS[currentKit]);
+      loadedKitRef.current = currentKit;
+
       setIsAudioLoaded(true);
-      setStatusMessage("Ready.");
+      setStatusMessage(failed.length > 0 ? `Ready (${failed.length} sample${failed.length > 1 ? 's' : ''} failed to load)` : "Ready.");
       setTimeout(() => setStatusMessage(""), 3000);
     };
 
     loadAudio();
 
     return () => {
-      engine.stop();
+      engine.dispose();
     };
   }, []);
 
   // Handle Kit Change
   useEffect(() => {
-    if (audioEngineRef.current && isAudioLoaded) {
+    if (audioEngineRef.current && isAudioLoaded && loadedKitRef.current !== currentKit) {
       const changeKit = async () => {
         setStatusMessage(`Loading ${KITS[currentKit].name}...`);
-        await audioEngineRef.current?.loadKit(KITS[currentKit]);
-        setStatusMessage("");
+        const failed = await audioEngineRef.current?.loadKit(KITS[currentKit]) ?? [];
+        loadedKitRef.current = currentKit;
+        setStatusMessage(failed.length > 0 ? `${failed.length} sample${failed.length > 1 ? 's' : ''} failed to load` : "");
+        if (failed.length > 0) setTimeout(() => setStatusMessage(""), 3000);
       };
       changeKit();
     }
@@ -173,15 +179,15 @@ const App: React.FC = () => {
       });
   };
 
-  const handlePlayToggle = () => {
+  const handlePlayToggle = async () => {
     if (!audioEngineRef.current) return;
-    
+
     if (isPlaying) {
       audioEngineRef.current.stop();
       setIsPlaying(false);
     } else {
-      audioEngineRef.current.start();
-      setIsPlaying(true);
+      const started = await audioEngineRef.current.start();
+      setIsPlaying(started);
     }
   };
 
@@ -303,17 +309,19 @@ const App: React.FC = () => {
               // Stop Playback
               setIsPlaying(false);
               audioEngineRef.current?.stop();
-              
-              // Apply state
-              if(data.name) setProjectName(data.name);
-              if(data.tracks) setTracks(data.tracks);
-              if(data.steps) setSteps(data.steps);
-              if(data.grids) setGrids(data.grids);
-              if(data.bpm) setBpm(data.bpm);
-              if(data.swing) setSwing(data.swing);
-              if(data.currentKit && KITS[data.currentKit]) setCurrentKit(data.currentKit);
-              if(data.activeBankIndex !== undefined) setActiveBankIndex(data.activeBankIndex);
-              
+
+              // Apply state (normalized so a stale/hand-edited file can't desync
+              // grid rows, track count or step count)
+              const normalized = normalizePatternData(data, tracks);
+              setProjectName(normalized.name!);
+              setTracks(normalized.tracks);
+              setSteps(normalized.steps);
+              setGrids(normalized.grids);
+              setBpm(normalized.bpm);
+              setSwing(normalized.swing);
+              if (KITS[normalized.currentKit]) setCurrentKit(normalized.currentKit);
+              setActiveBankIndex(normalized.activeBankIndex);
+
               setStatusMessage("Project loaded successfully.");
               setTimeout(() => setStatusMessage(""), 3000);
           } catch (err) {

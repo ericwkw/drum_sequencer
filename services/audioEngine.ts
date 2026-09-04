@@ -1,6 +1,21 @@
 
 import { DrumKit, Track } from '../types';
 
+// Swing lengthens every other 16th note and shortens the one after it.
+// `noteIndex` must be a counter that increments every note played and is
+// only ever reset when the transport itself restarts (start()) — NOT when
+// the pattern wraps back to step 0. Deriving the parity from the pattern
+// step index instead breaks on odd step counts (5/4, 7/8, etc.): the wrap
+// from the last step back to step 0 produces two "lengthen" notes in a row,
+// so the loop runs measurably long every cycle instead of holding tempo.
+// Capped at 0.33 (~triplet feel) to avoid breaking time.
+export const computeStepDuration = (noteIndex: number, baseSixteenth: number, swing: number): number => {
+  const swingFactor = swing * 0.33;
+  return noteIndex % 2 === 0
+    ? baseSixteenth * (1 + swingFactor)
+    : baseSixteenth * (1 - swingFactor);
+};
+
 export class AudioEngine {
   private context: AudioContext | null = null;
   private buffers: Record<string, AudioBuffer> = {};
@@ -27,6 +42,8 @@ export class AudioEngine {
   
   private activeGrid: boolean[][] = [];
   private activeTracks: Track[] = [];
+  private noteIndex: number = 0;
+  private activeSources: Set<AudioBufferSourceNode> = new Set();
 
   constructor(onStepPlay: (step: number) => void) {
     this.onStepPlay = onStepPlay;
@@ -95,8 +112,12 @@ export class AudioEngine {
     }
   }
 
-  public async loadKit(kit: DrumKit) {
+  // Returns the instrument ids whose sample failed to load, so a silently
+  // dead track can be surfaced to the user instead of just logged.
+  public async loadKit(kit: DrumKit): Promise<string[]> {
     if (!this.context) await this.initialize();
+
+    const failed: string[] = [];
 
     const loadPromises = Object.entries(kit.samples).map(async ([id, url]) => {
       try {
@@ -109,10 +130,12 @@ export class AudioEngine {
         this.buffers[id] = audioBuffer;
       } catch (e) {
         console.error(`Failed to load sample for ${id} from ${url}`, e);
+        failed.push(id);
       }
     });
 
     await Promise.all(loadPromises);
+    return failed;
   }
 
   public updateSequence(grid: boolean[][], tracks: Track[], steps: number) {
@@ -129,15 +152,17 @@ export class AudioEngine {
     this.swing = swing;
   }
 
-  public async start() {
-    if (this.isPlaying || !this.context) return;
-    
+  public async start(): Promise<boolean> {
+    if (this.isPlaying || !this.context) return false;
+
     await this.resumeContext();
 
     this.isPlaying = true;
     this.currentStep = 0;
+    this.noteIndex = 0;
     this.nextNoteTime = this.context.currentTime;
     this.scheduler();
+    return true;
   }
 
   public stop() {
@@ -147,7 +172,26 @@ export class AudioEngine {
       this.timerID = null;
     }
     this.currentStep = 0;
-    this.onStepPlay(0); 
+    this.onStepPlay(0);
+
+    // Notes scheduled up to `scheduleAheadTime` ahead are already queued on
+    // the AudioContext clock; cancel them or they play out after Stop.
+    this.activeSources.forEach((source) => {
+      try {
+        source.stop();
+      } catch {
+        // Already stopped/ended — ignore.
+      }
+    });
+    this.activeSources.clear();
+  }
+
+  public async dispose() {
+    this.stop();
+    if (this.context && this.context.state !== 'closed') {
+      await this.context.close();
+    }
+    this.context = null;
   }
 
   public playOneShot(instrumentId: string, volume: number = 1.0, pitch: number = 0) {
@@ -159,24 +203,9 @@ export class AudioEngine {
   private nextNote() {
     const secondsPerBeat = 60.0 / this.bpm;
     const baseSixteenth = 0.25 * secondsPerBeat;
-    
-    // Apply Swing
-    // Swing affects odd-numbered 16th notes (1, 3, 5...).
-    // Standard: Even (0) -> 0.25s -> Odd (1) -> 0.25s -> Even (2)
-    // Swing:    Even (0) -> 0.25*(1+s) -> Odd (1) -> 0.25*(1-s) -> Even (2)
-    // We cap swing impact at 0.33 to prevent breaking time (triplet feel max)
-    const swingFactor = this.swing * 0.33; 
 
-    let duration = baseSixteenth;
-    if (this.currentStep % 2 === 0) {
-        // Current is Even, next is Odd. Lengthen this step.
-        duration = baseSixteenth * (1 + swingFactor);
-    } else {
-        // Current is Odd, next is Even. Shorten this step.
-        duration = baseSixteenth * (1 - swingFactor);
-    }
-
-    this.nextNoteTime += duration;
+    this.nextNoteTime += computeStepDuration(this.noteIndex, baseSixteenth, this.swing);
+    this.noteIndex++;
 
     this.currentStep++;
     if (this.currentStep >= this.steps) {
@@ -224,6 +253,9 @@ export class AudioEngine {
     if (sendToReverb && this.reverbGain) {
         gainNode.connect(this.reverbGain); // Send to reverb bus
     }
+
+    this.activeSources.add(source);
+    source.onended = () => this.activeSources.delete(source);
 
     source.start(time);
   }
