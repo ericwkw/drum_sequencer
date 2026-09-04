@@ -2,7 +2,7 @@
 
 **BeatMe** is a professional-grade web drum sequencer that fuses classic groovebox workflows with the power of Generative AI. 
 
-Designed for musicians and producers, it runs entirely in the browser using the Web Audio API. You can compose beats manually using the step sequencer, or describe a vibe (e.g., *"Lo-fi hip hop beat with heavy swing"* or *"Fast-paced Berlin techno"*) and watch **Google Gemini** dream up the pattern for you.
+Designed for musicians and producers, it runs entirely in the browser using the Web Audio API. You can compose beats manually using the step sequencer, or describe a vibe (e.g., *"Lo-fi hip hop beat with heavy swing"* or *"Fast-paced Berlin techno"*) and watch an **LLM** dream up the pattern for you.
 
 ![BeatMe Interface](https://via.placeholder.com/1200x600/111827/38bdf8?text=BeatMe+Sequencer+Screenshot)
 
@@ -17,8 +17,10 @@ Designed for musicians and producers, it runs entirely in the browser using the 
   - **Swing**: Global MPC-style swing parameter to humanize your rhythms.
 
 ### 🧠 AI Composer
-- **Text-to-Beat**: Powered by **Google Gemini 2.5 Flash**. Just type a prompt, and the AI generates a full multi-track pattern instantly.
+- **Text-to-Beat**: Provider-agnostic — talks to any OpenAI-compatible chat-completions endpoint (OpenRouter, Gemini's OpenAI-compat endpoint, etc.), config-driven via `.env`. Just type a prompt, and the AI generates a full multi-track pattern instantly.
 - **Smart Mapping**: The AI understands specific instrument roles (e.g., syncing open hats with kicks) and genre-specific tempos.
+- **Retries on bad output**: an invalid response gets one nudged retry before failing.
+- **Offline fallback**: no API key configured? Dream still works, generating from a built-in deterministic pattern instead of blocking the feature.
 
 ### 🎹 Advanced Sequencing
 - **Pattern Banking**: 4 distinct banks (**A, B, C, D**) per project. Create variations for Verses, Choruses, and Drops and switch instantly.
@@ -39,14 +41,14 @@ Designed for musicians and producers, it runs entirely in the browser using the 
 
 - **Frontend**: React 18, TypeScript, Vite
 - **Styling**: Tailwind CSS
-- **AI**: Google GenAI SDK (`@google/genai`)
+- **AI**: Plain `fetch` against any OpenAI-compatible `/chat/completions` endpoint — no vendor SDK
 - **Audio**: Native Web Audio API (`AudioContext`, `GainNode`, `ConvolverNode`)
 
 ## 📦 Getting Started
 
 ### Prerequisites
 - Node.js (v18 or higher)
-- A Google AI Studio API Key (for AI features)
+- An API key for AI generation (optional — Dream falls back to an offline generator without one)
 
 ### Installation
 
@@ -61,15 +63,23 @@ Designed for musicians and producers, it runs entirely in the browser using the 
    npm install
    ```
 
-3. **Configure Environment**
-   Create a `.env` file in the root directory (or configure Vercel environment variables):
+3. **Configure Environment (optional)**
+   AI generation talks to any OpenAI-compatible `/chat/completions` endpoint. Create a
+   `.env` file in the root directory (or configure Vercel environment variables) to point
+   it at a provider:
    ```env
-   # Get your key at https://aistudio.google.com/
-   GEMINI_API_KEY=your_google_gemini_api_key_here
+   # OpenRouter (default) — get a free key at https://openrouter.ai/keys
+   API_KEY=your_openrouter_key_here
+   # LLM_BASE_URL and LLM_MODEL default to OpenRouter + a free GLM model; override to
+   # use a different provider, e.g. Gemini's OpenAI-compatible endpoint:
+   # LLM_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai
+   # LLM_MODEL=gemini-2.5-flash
    ```
+   No key? Dream still works — it falls back to a built-in offline pattern generator.
+
    Note: this key is compiled directly into the client bundle at build time (there's no
-   backend proxy), so it is visible to anyone who inspects the deployed app. Don't use a
-   key with billing limits you're not comfortable exposing.
+   backend proxy), so it is visible to anyone who inspects the deployed app. Use a free
+   or low-limit key.
 
 4. **Run Local Server**
    ```bash

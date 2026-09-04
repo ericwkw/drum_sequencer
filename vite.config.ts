@@ -12,8 +12,11 @@ export default defineConfig(({ mode }) => {
       },
       plugins: [react()],
       define: {
-        'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-        'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY)
+        // Injected at build time; the client reads process.env.*.
+        // No key => the app falls back to the offline pattern generator.
+        'process.env.API_KEY': JSON.stringify(env.API_KEY || env.LLM_API_KEY || env.GLM_API_KEY || env.VITE_API_KEY || ''),
+        'process.env.LLM_BASE_URL': JSON.stringify(env.LLM_BASE_URL || ''),
+        'process.env.LLM_MODEL': JSON.stringify(env.LLM_MODEL || ''),
       },
       resolve: {
         alias: {
