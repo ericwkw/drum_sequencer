@@ -23,10 +23,12 @@ Designed for musicians and producers, it runs entirely in the browser using the 
 ### 🎹 Advanced Sequencing
 - **Pattern Banking**: 4 distinct banks (**A, B, C, D**) per project. Create variations for Verses, Choruses, and Drops and switch instantly.
 - **Polyrhythms & Odd Meters**: Support for custom time signatures (3/4, 5/4, 7/8) and adjustable step counts (4 to 64 steps).
-- **Vintage Kits**: Switch between legendary drum machine sounds:
-  - **Classic (CR-78)**: The warmth of early analog rhythm boxes.
-  - **Analog (KPR-77)**: Raw, metallic analog textures.
-  - **Digital (TR-808)**: The industry-standard boom and snap of the 80s.
+- **Vintage Kits**: Switch between three kick/snare/hihat sample sets:
+  - **Classic (CR-78)**: Full CR-78 samples for every instrument.
+  - **Analog (KPR-77)**: Real KPR-77 kick/snare/hihat; other instruments fall back to CR-78 (the host doesn't serve the rest of the KPR-77 set).
+  - **Hybrid (Safe)**: KPR-77 kick/snare over CR-78 percussion — not an actual TR-808 sample set, just the closest punchy combination available from reliable sources.
+  
+  Crash and ride are approximated from CR-78 tom/hihat samples in all three kits — there's no dedicated cymbal sample source wired up yet.
 
 ### 💾 Workflow & Persistence
 - **Auto-Save**: Your session (patterns, mixer settings, kit selection) is automatically saved to LocalStorage.
@@ -63,13 +65,25 @@ Designed for musicians and producers, it runs entirely in the browser using the 
    Create a `.env` file in the root directory (or configure Vercel environment variables):
    ```env
    # Get your key at https://aistudio.google.com/
-   API_KEY=your_google_gemini_api_key_here
+   GEMINI_API_KEY=your_google_gemini_api_key_here
    ```
+   Note: this key is compiled directly into the client bundle at build time (there's no
+   backend proxy), so it is visible to anyone who inspects the deployed app. Don't use a
+   key with billing limits you're not comfortable exposing.
 
 4. **Run Local Server**
    ```bash
-   npm run start
+   npm run dev
    ```
+
+### Other Scripts
+```bash
+npm run build      # Production build
+npm run preview    # Preview the production build locally
+npm run typecheck  # tsc --noEmit
+npm run test       # Run the vitest suite once
+npm run test:watch # Run vitest in watch mode
+```
 
 ## 🎮 Quick Guide
 
