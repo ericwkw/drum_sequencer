@@ -1,5 +1,5 @@
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { KITS, INSTRUMENTS } from '../constants';
 import { InstrumentType } from '../types';
 
@@ -60,7 +60,23 @@ const Controls: React.FC<ControlsProps> = ({
 }) => {
   const [prompt, setPrompt] = useState('');
   const [isAddMenuOpen, setIsAddMenuOpen] = useState(false);
+  const [generatingSeconds, setGeneratingSeconds] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // AI generation can take 15-20s+ depending on the provider/model, so track
+  // elapsed time to show a "still working" hint after the initial wait.
+  useEffect(() => {
+    if (!isGenerating) {
+      setGeneratingSeconds(0);
+      return;
+    }
+    const intervalId = window.setInterval(() => {
+      setGeneratingSeconds((s) => s + 1);
+    }, 1000);
+    return () => window.clearInterval(intervalId);
+  }, [isGenerating]);
+
+  const ELAPSED_HINT_THRESHOLD_SECONDS = 5;
 
   const handleGenerate = (e: React.FormEvent) => {
     e.preventDefault();
@@ -380,11 +396,21 @@ const Controls: React.FC<ControlsProps> = ({
                     <button
                         type="submit"
                         disabled={isGenerating || !isLoaded}
-                        className="px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs rounded-md transition-colors disabled:opacity-50 whitespace-nowrap"
+                        className="px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs rounded-md transition-colors disabled:opacity-50 whitespace-nowrap flex items-center justify-center gap-1.5 min-w-[64px]"
                     >
-                        {isGenerating ? '...' : 'Dream'}
+                        {isGenerating ? (
+                            <svg className="animate-spin h-3.5 w-3.5 text-white" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                            </svg>
+                        ) : 'Dream'}
                     </button>
                 </div>
+                {isGenerating && generatingSeconds >= ELAPSED_HINT_THRESHOLD_SECONDS && (
+                    <div className="absolute -bottom-4 right-1 text-[10px] text-gray-500 font-mono">
+                        Still composing... {generatingSeconds}s
+                    </div>
+                )}
               </form>
         </div>
       </div>
